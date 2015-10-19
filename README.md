@@ -45,10 +45,15 @@ Parsing '/Users/sgoeschl/work/playground/access-log-sla-report/./src/test/data/a
 Execute the following command line
 
 ```
-access-log-sla-report> ./access-log-analyzer.sh ./src/test/data/access.log 
-Parsing the following number of file(s) : 1
-Parsing '/Users/sgoeschl/work/playground/access-log-sla-report/./src/test/data/access.log' containing 11 lines took 49 ms
+access-log-sla-report> mvn clean install
 ```
+
+It generates a 
+
+ * access-log-sla-report-1.0.0-SNAPSHOT-dist.zip
+ * access-log-sla-report-1.0.0-SNAPSHOT-dist.tar.gz
+ 
+which can be unpacked at the remote server 
 
 # 4. Understanding the HTML Report
 
