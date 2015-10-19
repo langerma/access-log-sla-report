@@ -71,7 +71,7 @@ function parseLogfile(fileName) {
         }
 
         var startTime = java.lang.System.currentTimeMillis();
-        var lineCount = 0;
+        var lineNumber = 0;
         var errorCount = 0;
         var ignoredCount = 0;
         var logEntry = null;
@@ -80,8 +80,8 @@ function parseLogfile(fileName) {
 
         while ((line = reader.readLine()) != null) {
 
-            lineCount++;
-            logEntry = parseLine(line);
+            lineNumber++;
+            logEntry = parseLine(logFile, lineNumber, line);
 
             if (logEntry != null) {
 
@@ -99,7 +99,7 @@ function parseLogfile(fileName) {
 
         var endTime = java.lang.System.currentTimeMillis();
 
-        println("Parsing '" + logFile.getAbsolutePath() + "' containing " + lineCount + " lines took " + (endTime - startTime) + " ms");
+        println("Parsing '" + logFile.getAbsolutePath() + "' containing " + lineNumber + " lines took " + (endTime - startTime) + " ms");
 
         if (ignoredCount > 0) {
             println("The following number of lines were ignored : " + ignoredCount);
@@ -145,10 +145,12 @@ function accept(logEntry) {
 /**
  * Parse a single line of the HTTPD access log and add it to the report model.
  *
+ * @param logFile the currently processed log file
+ * @para  lineCount the currently processing line number
  * @param line current line of the logfile
  * @return null if the line was not parsable or the processes line
  */
-function parseLine(line) {
+function parseLine(logFile, lineNumber, line) {
 
     try {
 
@@ -196,7 +198,11 @@ function parseLine(line) {
 
         // create the LogEntry instance
 
-        var result = new LogEntry(ipAddress,
+        var result = new LogEntry(
+            logFile,
+            lineNumber,
+            line,
+            ipAddress,
             timestamp,
             requestUrl,
             collapsedUrl,
@@ -235,6 +241,7 @@ function preProcessLine(line) {
  * Process a single log entry.
  */
 function process(logEntry) {
+    println(logEntry)
     addToReportModel(logEntry);
 }
 
@@ -324,7 +331,7 @@ function writeHtmlReport(fileName, title, subtitle) {
     writer.close();
 }
 
-function LogEntry(ipAddress, timestamp, requestUrl, collapsedUrl, requestMethod, responseCode, bytesSent, referer, userAgent, requestParams, timeTaken) {
+function LogEntry(logFile, lineNumber, line, ipAddress, timestamp, requestUrl, collapsedUrl, requestMethod, responseCode, bytesSent, referer, userAgent, requestParams, timeTaken) {
 
     if (responseCode < 100 || responseCode > 506) {
         throw "Invalid responseCode : " + responseCode;
@@ -349,6 +356,15 @@ function LogEntry(ipAddress, timestamp, requestUrl, collapsedUrl, requestMethod,
     if (requestMethod == null || requestMethod.isEmpty()) {
         throw "Empty 'requestMethod' parameter";
     }
+
+    /** the corresponding access log */
+    this.logFile = logFile;
+
+    /** the corresponding line number */
+    this.lineNumber = lineNumber;
+
+    /** the corresponding line from the access log */
+    this.line = line;
 
     /** the source IP address */
     this.ipAddress = ipAddress;
@@ -391,11 +407,25 @@ function LogEntry(ipAddress, timestamp, requestUrl, collapsedUrl, requestMethod,
         buffer.append("collapsedUrl=").append(this.collapsedUrl).append("\n");
         buffer.append("requestMethod=").append(this.requestMethod).append("\n");
         buffer.append("responseCode=").append(this.responseCode).append("\n");
-        buffer.append("bytesSent=").append(this.bytesSent).append("\n");
+        buffer.append("bytesSent=").append(this.bytesSent.toString()).append("\n");
         buffer.append("referer=").append(this.referer).append("\n");
         buffer.append("userAgent=").append(this.userAgent).append("\n");
         buffer.append("requestParams=").append(this.requestParams).append("\n");
-        buffer.append("timeTaken=").append(this.timeTaken).append("\n");
+        buffer.append("timeTaken=").append(this.timeTaken.toString()).append("\n");
+        buffer.append("logFile=").append(this.logFile).append("\n");
+        buffer.append("lineNumber=").append(this.lineNumber.toString()).append("\n");
+        return buffer.toString();
+    };
+
+    this.toCsv = function () {
+        var buffer = new java.lang.StringBuilder();
+        buffer.append(this.timestamp).append(";");
+        buffer.append(this.requestMethod).append(";");
+        buffer.append(this.collapsedUrl).append(";");
+        buffer.append(this.responseCode.toString()).append(";");
+        buffer.append(this.timeTaken.toString()).append(";");
+        buffer.append(this.logFile.getAbsolutePath()).append(";");
+        buffer.append(this.lineNumber.toString());
         return buffer.toString();
     };
 
