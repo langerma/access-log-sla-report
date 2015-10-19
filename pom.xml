@@ -9,7 +9,7 @@
     <packaging>jar</packaging>
     <name>HTTP Access Log SLA Report</name>
     <description>Generate a SLA report from a HTTPD access log</description>
-    <url></url>
+    <url>https://github.com/sgoeschl/access-log-sla-report</url>
     <inceptionYear>2015</inceptionYear>
 
     <properties>

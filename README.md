@@ -55,7 +55,7 @@ It generates a
  
 which can be unpacked at the remote server 
 
-# 4. Understanding the HTML Report
+# 5. Understanding the HTML Report
 
 ![alt text](./src/site/images/access-log-sla-report.png "HTML Report")
 
@@ -65,6 +65,19 @@ Looking at the HTML report reveals the following information
 * Some HTTP requests are red indicating that at least on error was detected
 * The "Page Details Table" shows the response time sorted in various buckets
    * ''restapi/api/protected/transactions # GET'' has 3 invocations whereas 2 invocations are in the bucket "80-160 ms" and the average response time of these requests is 97,5 milliseconds
+   
+   
+# 6. Under The Hood
+            
+ * The Javascript is executed by Rhino (JDK 1.7) or Nashorn (JDK 1.8)
+ * The script reads the access logs line by line and each line is split into individual parts using regular expressions
+ * The individual parts are further processed to create "LogEntry" instances
+ * A "LogEntry" instance contains a collapsed URL, a HTTP result code, a timestamp and a duration
+ * This information is feed to [jmeter-sla-report](https://github.com/sgoeschl/jmeter-sla-report) which delegates the work to [JAMon](http://jamonapi.sourceforge.net)
+ * After feeding all "LogEntry" instances to JAMon a HTML report is created
+      
+   
+   
 
 
 
