@@ -1,8 +1,22 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 /**
  * This JavaScript parses an Apache access log and uses JAMon to generate a response time report.
- *
- * It can be started using
- * jrunscript -cp lib/jamon-2.7.jar:lib/jmeter-sla-report-0.0.1-SNAPSHOT.jar -f src/httpd-log-analyzer.js src/test/data/access.log
  *
  * @author <a href="mailto:siegfried.goeschl@gmail.com">Siegfried Goeschl</a>
  */
@@ -22,17 +36,18 @@ var LOG_ENTRY_REGEXP = java.util.regex.Pattern.compile(LOG_ENTRY_REGEXP_STRING);
 var RESOURCE_ID_PARAMETER_REGEXP = java.util.regex.Pattern.compile("^([a-z]{1,15}+\\d?)$");
 
 // The underlying JAMon report model
-var JMETER_REPORT_MODEL = new org.apache.jmeter.extra.report.sla.JMeterReportModel();
+var JAMON_REPORT_MODEL = new org.apache.jmeter.extra.report.sla.JMeterReportModel();
 
 function main(arguments) {
 
     if (arguments.length == 0) {
-        println("Usage : jrunscript -cp lib/jamon-2.81.jar:lib/jmeter-sla-report-1.0.0.jar -f httpd-log-analyzer.js file[s]");
+        println("Usage : jrunscript -cp lib/jamon-2.81.jar:lib/jmeter-sla-report-1.0.0.jar ./src/main/js/access-log-sla-report.js file[s]");
         return 1;
     }
 
     parseLogfiles(arguments);
     writeHtmlReport("access-log-report.html", "Apache Access Log Report", "Server");
+    return 0;
 }
 
 function parseLogfiles(fileNames) {
@@ -266,12 +281,12 @@ function addToReportModel(logEntry) {
     var timeTaken = logEntry.timeTaken;
 
     if (logEntry.isSuccess()) {
-        JMETER_REPORT_MODEL.addSuccess(monitorName,
+        JAMON_REPORT_MODEL.addSuccess(monitorName,
             timestamp,
             timeTaken);
     }
     else {
-        JMETER_REPORT_MODEL.addFailure(
+        JAMON_REPORT_MODEL.addFailure(
             monitorName,
             timestamp,
             timeTaken,
@@ -293,7 +308,7 @@ function writeHtmlReport(fileName, title, subtitle) {
     var sortColumn = org.apache.jmeter.extra.report.sla.JMeterHtmlReportWriter.DISPLAY_HEADER_LABEL_INDEX;
 
     // set up the HTML report
-    var reportWriter = new org.apache.jmeter.extra.report.sla.JMeterHtmlReportWriter(JMETER_REPORT_MODEL, sortColumn, sortOrder);
+    var reportWriter = new org.apache.jmeter.extra.report.sla.JMeterHtmlReportWriter(JAMON_REPORT_MODEL, sortColumn, sortOrder);
     reportWriter.setReportTitle(title);
     reportWriter.setReportSubtitle(subtitle);
 
@@ -362,7 +377,7 @@ function LogEntry(ipAddress, timestamp, requestUrl, collapsedUrl, requestMethod,
     /** the user agent string */
     this.userAgent = userAgent;
 
-    /** additional request parameters, eg. cookies */
+    /** additional request parameters */
     this.requestParams = requestParams;
 
     /** the response time in milliseconds */
@@ -444,7 +459,7 @@ function LogEntry(ipAddress, timestamp, requestUrl, collapsedUrl, requestMethod,
 
     /**
      * Decide if this HTTP response code is considered an success. This method can
-     * be customized if you have your own ideas what a successful call look likes, e.g.
+     * be customized if you have your own ideas what a successful call look like, e.g.
      * ignoring "404" for certain URLs.
      */
     this.isSuccess = function () {
