@@ -8,13 +8,20 @@
 
 if [ "$APP_HOME" = "" ] ; then
   COMMAND=$0
-  APP_HOME=`dirname ${COMMAND}`/.
+  APP_HOME=`dirname ${COMMAND}`
+fi
+
+# detect environment and set the class path separator
+if [[ "$(uname -s)" == CYGWIN* ]]; then
+	CP_SEPARATOR=";"
+else
+	CP_SEPARATOR=":"
 fi
 
 # pick up libraries in ./lib
 for i in ${APP_HOME}/lib/* ; do
   if [ "$LOCALCLASSPATH" != "" ]; then
-    LOCALCLASSPATH=${LOCALCLASSPATH}:$i
+    LOCALCLASSPATH=${LOCALCLASSPATH}${CP_SEPARATOR}$i
   else
     LOCALCLASSPATH=$i
   fi
