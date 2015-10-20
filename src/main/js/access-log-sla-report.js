@@ -55,28 +55,52 @@ function parseLogfiles(fileNames) {
     println("Parsing the following number of file(s) : " + fileNames.length);
 
     for (var i = 0; i < fileNames.length; i++) {
-        parseLogfile(fileNames[i]);
+
+        var fileName = fileNames[i];
+        var logFile = new java.io.File(fileName);
+        var reader = null;
+
+        try
+        {
+            var reader = createReader(logFile);
+            parseLogfile(logFile, reader);
+        }
+        finally {
+            if(reader != null) {
+                reader.close();
+            }
+        }
     }
 }
 
-function parseLogfile(fileName) {
+function isCompressedFile(logFile) {
+    var name = logFile.getName();
+    return name.endsWith(".zip") || name.endsWith(".gz") || name.endsWith("gzip") || name.endsWith(".bzip2") || name.endsWith("bz2");
+}
 
-    var reader = null;
-    var logFile = new java.io.File(fileName);
+function createReader(logFile) {
+    if(isCompressedFile(logFile)) {
+        var fileInputStream = new java.io.FileInputStream(logFile);
+        var bufferedInputStream = new java.io.BufferedInputStream(fileInputStream);
+        var compressedInputStream = new org.apache.commons.compress.compressors.CompressorStreamFactory().createCompressorInputStream(bufferedInputStream);
+        var inputStreamReader = new java.io.InputStreamReader(compressedInputStream);
+        var bufferedReader = new java.io.BufferedReader(inputStreamReader);
+        return bufferedReader;
+    }
+    else {
+        return new java.io.BufferedReader(new java.io.FileReader(logFile));
+    }
+}
+
+function parseLogfile(logFile, reader) {
 
     try {
-
-        if (!logFile.exists()) {
-            throw "The following logFile was not found: " + fileName;
-        }
 
         var startTime = java.lang.System.currentTimeMillis();
         var lineNumber = 0;
         var errorCount = 0;
         var ignoredCount = 0;
         var logEntry = null;
-
-        reader = new java.io.BufferedReader(new java.io.FileReader(logFile));
 
         while ((line = reader.readLine()) != null) {
 
@@ -111,11 +135,6 @@ function parseLogfile(fileName) {
     }
     catch (e) {
         println("Parsing '" + logFile.getAbsolutePath() + "' failed : " + e);
-    }
-    finally {
-        if (reader != null) {
-            reader.close();
-        }
     }
 }
 
@@ -241,7 +260,6 @@ function preProcessLine(line) {
  * Process a single log entry.
  */
 function process(logEntry) {
-    println(logEntry)
     addToReportModel(logEntry);
 }
 
