@@ -6,13 +6,13 @@
 
 #!/bin/sh
 
-if [ "$SERVER_HOME" = "" ] ; then
+if [ "$APP_HOME" = "" ] ; then
   COMMAND=$0
-  SERVER_HOME=`dirname ${COMMAND}`/.
+  APP_HOME=`dirname ${COMMAND}`/.
 fi
 
 # pick up libraries in ./lib
-for i in ${SERVER_HOME}/lib/* ; do
+for i in ${APP_HOME}/lib/* ; do
   if [ "$LOCALCLASSPATH" != "" ]; then
     LOCALCLASSPATH=${LOCALCLASSPATH}:$i
   else
@@ -20,4 +20,4 @@ for i in ${SERVER_HOME}/lib/* ; do
   fi
 done
 
-jrunscript -cp $LOCALCLASSPATH ./src/main/js/access-log-sla-report.js "$@"
+${JAVA_HOME}/bin/jrunscript -cp $LOCALCLASSPATH $APP_HOME/src/main/js/access-log-sla-report.js "$@"
