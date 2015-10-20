@@ -23,7 +23,8 @@
 
 // Some ad-hoc filtering you can turn on
 var LOGENTRY_FILTER_DURATION_MS = 0;
-var LOGENTRY_FILTER_BASEURL = "";
+var LOGENTRY_FILTER_INCLUDE_COLLAPSED_URL = "";
+var LOGENTRY_FILTER_EXCLUDE_COLLAPSED_URL = "";
 
 var LOG_ENTRY_DATE_FORMATTER = new java.text.SimpleDateFormat("dd/MMM/yyyy:HH:mm:ss Z", java.util.Locale.ENGLISH);
 
@@ -52,7 +53,7 @@ function main(arguments) {
 
 function parseLogfiles(fileNames) {
 
-    println("Parsing the following number of file(s) : " + fileNames.length);
+    println("[INFO] Parsing the following number of file(s) : " + fileNames.length);
 
     for (var i = 0; i < fileNames.length; i++) {
 
@@ -123,18 +124,18 @@ function parseLogfile(logFile, reader) {
 
         var endTime = java.lang.System.currentTimeMillis();
 
-        println("Parsing '" + logFile.getAbsolutePath() + "' containing " + lineNumber + " lines took " + (endTime - startTime) + " ms");
+        println("[INFO] Parsing '" + logFile.getAbsolutePath() + "' containing " + lineNumber + " lines took " + (endTime - startTime) + " ms");
 
         if (ignoredCount > 0) {
-            println("The following number of lines were ignored : " + ignoredCount);
+            println("[INFO] The following number of lines were ignored : " + ignoredCount);
         }
 
         if (errorCount > 0) {
-            println("Found the following number of lines we could not parse : " + errorCount);
+            println("[INFO] Found the following number of lines we could not parse : " + errorCount);
         }
     }
     catch (e) {
-        println("Parsing '" + logFile.getAbsolutePath() + "' failed : " + e);
+        println("[ERROR] Parsing '" + logFile.getAbsolutePath() + "' failed : " + e);
     }
 }
 
@@ -154,7 +155,11 @@ function accept(logEntry) {
         return false;
     }
 
-    if (LOGENTRY_FILTER_BASEURL != null && LOGENTRY_FILTER_BASEURL.length > 0 && !logEntry.collapsedUrl.contains(LOGENTRY_FILTER_BASEURL)) {
+    if (LOGENTRY_FILTER_INCLUDE_COLLAPSED_URL != null && LOGENTRY_FILTER_INCLUDE_COLLAPSED_URL.length > 0 && !logEntry.collapsedUrl.contains(LOGENTRY_FILTER_INCLUDE_COLLAPSED_URL)) {
+        return false;
+    }
+
+    if (LOGENTRY_FILTER_EXCLUDE_COLLAPSED_URL != null && LOGENTRY_FILTER_EXCLUDE_COLLAPSED_URL.length > 0 && logEntry.collapsedUrl.contains(LOGENTRY_FILTER_EXCLUDE_COLLAPSED_URL)) {
         return false;
     }
 
@@ -184,7 +189,7 @@ function parseLine(logFile, lineNumber, line) {
         // check that the complete regexp matches
 
         if (!matcher.matches() || LOG_ENTRY_REGEXP_MATCHES_REQUIRED != matcher.groupCount()) {
-            println("Bad log entry (or problem with RE?) : " + preProccessedLine);
+            println("[ERROR] Bad log entry (or problem with RE?) : " + preProccessedLine);
             return null;
         }
 
@@ -236,7 +241,7 @@ function parseLine(logFile, lineNumber, line) {
         return result;
     }
     catch (e) {
-        println("Failed to parse the following line : " + line);
+        println("[WARN] Failed to parse the following line : " + line);
         println(e);
         return null;
     }
@@ -260,6 +265,7 @@ function preProcessLine(line) {
  * Process a single log entry.
  */
 function process(logEntry) {
+    // println(logEntry.toCsv());
     addToReportModel(logEntry);
 }
 
@@ -436,8 +442,9 @@ function LogEntry(logFile, lineNumber, line, ipAddress, timestamp, requestUrl, c
     };
 
     this.toCsv = function () {
+        var sdf = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mmZ");
         var buffer = new java.lang.StringBuilder();
-        buffer.append(this.timestamp).append(";");
+        buffer.append(sdf.format(this.timestamp)).append(";");
         buffer.append(this.requestMethod).append(";");
         buffer.append(this.collapsedUrl).append(";");
         buffer.append(this.responseCode.toString()).append(";");
