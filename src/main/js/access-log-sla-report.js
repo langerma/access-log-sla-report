@@ -26,7 +26,7 @@ var LOGENTRY_FILTER_DURATION_MS = 0;
 var LOGENTRY_FILTER_INCLUDE_COLLAPSED_URL = "";
 var LOGENTRY_FILTER_EXCLUDE_COLLAPSED_URL = "";
 
-var LOG_ENTRY_DATE_FORMATTER = new java.text.SimpleDateFormat("dd/MMM/yyyy:HH:mm:ss Z", java.util.Locale.ENGLISH);
+var LOG_ENTRY_DATE_PARSER = new java.text.SimpleDateFormat("dd/MMM/yyyy:HH:mm:ss Z", java.util.Locale.ENGLISH);
 
 // Regular expression applied to each line in the access log - change the regexp according to your HTTP server configuration
 var LOG_ENTRY_REGEXP_MATCHES_REQUIRED = 16;
@@ -63,7 +63,7 @@ function parseLogfiles(fileNames) {
 
         try
         {
-            var reader = createReader(logFile);
+            reader = createReader(logFile);
             parseLogfile(logFile, reader);
         }
         finally {
@@ -215,14 +215,14 @@ function parseLine(logFile, lineNumber, line) {
 
         // convert raw parameters
 
-        var timestamp = LOG_ENTRY_DATE_FORMATTER.parse(dateString);
+        var timestamp = LOG_ENTRY_DATE_PARSER.parse(dateString);
         var timeTaken = Math.round(parseInt(durationMicro) / 1000);
         var collapsedUrl = createCollapsedUrl(requestUrl);
 
 
         // create the LogEntry instance
 
-        var result = new LogEntry(
+        return new LogEntry(
             logFile,
             lineNumber,
             line,
@@ -237,8 +237,6 @@ function parseLine(logFile, lineNumber, line) {
             userAgent,
             requestParams,
             timeTaken);
-
-        return result;
     }
     catch (e) {
         println("[WARN] Failed to parse the following line : " + line);
@@ -522,7 +520,7 @@ function LogEntry(logFile, lineNumber, line, ipAddress, timestamp, requestUrl, c
             return ((this.responseCode >= 200 && this.responseCode < 400) || this.responseCode == 404);
         }
         else {
-            return (this.responseCode >= 200 && this.responseCode < 400);
+            return (this.responseCode >= 200 && this.responseCode < 300);
         }
     }
 }
