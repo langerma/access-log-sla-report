@@ -518,11 +518,11 @@ function LogEntry(logFile, lineNumber, line, ipAddress, timestamp, requestUrl, c
      * ignoring "404" for certain URLs.
      */
     this.isSuccess = function () {
-        if(this.collapsedUrl.contains("/accounts/*/images")) {
-            return ((this.responseCode > 100 && this.responseCode < 300) || this.responseCode == 404);
+        if(this.collapsedUrl.contains("/images") ) {
+            return ((this.responseCode >= 200 && this.responseCode < 400) || this.responseCode == 404);
         }
         else {
-            return (this.responseCode >= 200 && this.responseCode <= 204);
+            return (this.responseCode >= 200 && this.responseCode < 400);
         }
     }
 }
