@@ -24,10 +24,10 @@ import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-public class CustomerRegexpTest
+public class HttpdAccessLogRegExpTest
 {
     public static final int REGEXP_MATCHES_REQUIRED = 16;
-    public static final String LOG_ENTRY_PATTERN_STRING = "^(\\S+) (\\S+) (\\S+) \\[([\\w:/]+\\s[+\\-]\\d{4})\\] \"(.+?)\" (\\d{3}) (\\S+) \"([^\"]+)\" \"([^\"]+)\" pid:(\\S+) uid:(\\S+) con:(\\S+) cbs:(\\S+) ckr:(\\S+) cst:(\\S+) rtm:\\d+/(\\S+) .*";
+    public static final String LOG_ENTRY_PATTERN_STRING = "^(\\S+) (\\S+) (\\S+) \\[([\\w:/]+\\s[+\\-]\\d{4})\\] \"(.+?)\" (\\d{3}) (\\S+) \"([^\"]+)\" \"([^\"]+)\" pid:(\\S+) uid:(\\S+) con:(\\S+) cbs:(\\S+) ckr:(\\S+) cst:(\\S+) rtm:\\d+/(?<duration>\\S+) .*";
     public static final Pattern LOG_ENTRY_REGEXP = Pattern.compile(LOG_ENTRY_PATTERN_STRING);
 
     @Test
@@ -47,7 +47,7 @@ public class CustomerRegexpTest
         final String bytesSent = matcher.group(7);
         final String referer = matcher.group(8);
         final String userAgent = matcher.group(9);
-        final String durationMicro = matcher.group(16);
+        final String durationMicro = matcher.group("duration");
 
         assertEquals("127.0.0.1", ipAddress);
         assertEquals("10/Oct/2015:00:00:55 +0200", dateString);

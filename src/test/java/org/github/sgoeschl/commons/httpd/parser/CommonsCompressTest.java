@@ -30,11 +30,14 @@ import static org.junit.Assert.assertTrue;
 
 public class CommonsCompressTest
 {
+    private final String ACCESS_LOG_GZIP_FILE = "./src/test/data/httpd-access.log.gz";
+    private final String ACCESS_LOG_BZIP2_FILE = "./src/test/data/httpd-access.log.bz2";
+
     @Test
     public void shouldStreamGzipCompressedFile() throws Exception
     {
         String line;
-        File logFile = new File("./src/test/data/access.log.gz");
+        File logFile = new File(ACCESS_LOG_GZIP_FILE);
         FileInputStream fileInputStream = new FileInputStream(logFile);
         BufferedInputStream bufferedInputStream = new BufferedInputStream(fileInputStream);
         CompressorInputStream compressedInputStream = new CompressorStreamFactory().createCompressorInputStream(bufferedInputStream);
@@ -52,7 +55,8 @@ public class CommonsCompressTest
     public void shouldStreamBzip2CompressedFile() throws Exception
     {
         String line;
-        File logFile = new File("./src/test/data/access.log.bz2");
+
+        File logFile = new File(ACCESS_LOG_BZIP2_FILE);
         FileInputStream fileInputStream = new FileInputStream(logFile);
         BufferedInputStream bufferedInputStream = new BufferedInputStream(fileInputStream);
         CompressorInputStream compressedInputStream = new CompressorStreamFactory().createCompressorInputStream(bufferedInputStream);
