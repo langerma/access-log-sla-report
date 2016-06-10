@@ -116,7 +116,8 @@ Looking at the HTML report reveals the following information
 * There were 11 HTTP requests captured 
 * Some HTTP requests are shown in red color indicating that at least one error was detected
 * The "Page Details Table" shows the response time sorted in various buckets
-   * ''restapi/api/protected/transactions # GET'' has 3 invocations whereas 2 invocations are in the bucket "80-160 ms" and the average response time of these requests is 97,5 milliseconds
+* ''restapi/api/protected/transactions # GET'' has 3 invocations whereas 2 invocations are in the bucket "80-160 ms" and the average response time of these requests is 97,5 milliseconds
+* The section "Error Messages" keeps track of the HTTP requests causing errors 
    
    
 # 6. Under The Hood
@@ -145,6 +146,8 @@ The following tools are required to run the project
 * JDK 1.8
 
 # 8. sIT Access Log Format
+
+The following section describes the internal access log format for Apache HTTPD and Apache Tomcat
 
 ## 8.1 Apache HTTPD Access Log
 

@@ -16,33 +16,31 @@
  */
 package org.github.sgoeschl.commons.httpd.parser;
 
+import org.apache.commons.compress.compressors.CompressorInputStream;
+import org.apache.commons.compress.compressors.CompressorStreamFactory;
+import org.junit.Test;
+
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStreamReader;
 
-import org.apache.commons.compress.compressors.CompressorInputStream;
-import org.apache.commons.compress.compressors.CompressorStreamFactory;
-import org.junit.Test;
-
 import static org.junit.Assert.assertTrue;
 
-public class CommonsCompressTest
-{
+public class CommonsCompressTest {
     private final String ACCESS_LOG_GZIP_FILE = "./src/test/data/httpd-access.log.gz";
     private final String ACCESS_LOG_BZIP2_FILE = "./src/test/data/httpd-access.log.bz2";
 
     @Test
-    public void shouldStreamGzipCompressedFile() throws Exception
-    {
+    public void shouldStreamGzipCompressedFile() throws Exception {
         String line;
-        File logFile = new File(ACCESS_LOG_GZIP_FILE);
-        FileInputStream fileInputStream = new FileInputStream(logFile);
-        BufferedInputStream bufferedInputStream = new BufferedInputStream(fileInputStream);
-        CompressorInputStream compressedInputStream = new CompressorStreamFactory().createCompressorInputStream(bufferedInputStream);
-        InputStreamReader inputStreamReader = new InputStreamReader(compressedInputStream);
-        BufferedReader reader = new BufferedReader(inputStreamReader);
+        final File logFile = new File(ACCESS_LOG_GZIP_FILE);
+        final FileInputStream fileInputStream = new FileInputStream(logFile);
+        final BufferedInputStream bufferedInputStream = new BufferedInputStream(fileInputStream);
+        final CompressorInputStream compressedInputStream = new CompressorStreamFactory().createCompressorInputStream(bufferedInputStream);
+        final InputStreamReader inputStreamReader = new InputStreamReader(compressedInputStream);
+        final BufferedReader reader = new BufferedReader(inputStreamReader);
 
         while ((line = reader.readLine()) != null) {
             assertTrue(line.contains("localhost"));
@@ -52,16 +50,15 @@ public class CommonsCompressTest
     }
 
     @Test
-    public void shouldStreamBzip2CompressedFile() throws Exception
-    {
+    public void shouldStreamBzip2CompressedFile() throws Exception {
         String line;
 
-        File logFile = new File(ACCESS_LOG_BZIP2_FILE);
-        FileInputStream fileInputStream = new FileInputStream(logFile);
-        BufferedInputStream bufferedInputStream = new BufferedInputStream(fileInputStream);
-        CompressorInputStream compressedInputStream = new CompressorStreamFactory().createCompressorInputStream(bufferedInputStream);
-        InputStreamReader inputStreamReader = new InputStreamReader(compressedInputStream);
-        BufferedReader reader = new BufferedReader(inputStreamReader);
+        final File logFile = new File(ACCESS_LOG_BZIP2_FILE);
+        final FileInputStream fileInputStream = new FileInputStream(logFile);
+        final BufferedInputStream bufferedInputStream = new BufferedInputStream(fileInputStream);
+        final CompressorInputStream compressedInputStream = new CompressorStreamFactory().createCompressorInputStream(bufferedInputStream);
+        final InputStreamReader inputStreamReader = new InputStreamReader(compressedInputStream);
+        final BufferedReader reader = new BufferedReader(inputStreamReader);
 
         while ((line = reader.readLine()) != null) {
             assertTrue(line.contains("localhost"));

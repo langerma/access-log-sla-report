@@ -24,8 +24,8 @@
 
 var JAMON_REPORT_MODEL = new org.apache.jmeter.extra.report.sla.JMeterReportModel();
 
-var CATALINA_SIT_LOGENTRY_REGEXP_STRING = "^(\\S+) (\\S+) (\\S+) \\[([\\w:/]+\\s[+\\-]\\d{4})\\] \"(.+?)\" (\\d{3}) (\\S+) \"([^\"]+)\" \"([^\"]+)\" tid:(\\S+) uid:\"(\\S+)\" con:(\\S+) rtm:\\d+\\.\\d*/(?<duration>\\d+) hct:\"(\\S+)\" hac:\"(.*)\" sid:\"(.*)\" x-user-id:\"(.*)\" x-client-id:\"(.*)\" x-client-info:\"(.*)\"";
-var HTTPD_SIT_LOGENTRY_REGEXP_STRING = "^(\\S+) (\\S+) (\\S+) \\[([\\w:/]+\\s[+\\-]\\d{4})\\] \"(.+?)\" (\\d{3}) (\\S+) \"([^\"]+)\" \"([^\"]+)\" pid:(\\S+) uid:(\\S+) con:(\\S+) cbs:(\\S+) ckr:(\\S+) cst:(\\S+) rtm:\\d+/(?<duration>\\S+) .*";
+var CATALINA_SIT_LOGENTRY_REGEXP_STRING = "^(\\S+) (\\S+) (\\S+) \\[([\\w:/]+\\s[+\\-]\\d{4})\\] \"(.+?)\" (\\d{3}) (\\S+) \"([^\"]*)\" \"([^\"]+)\" tid:(\\S+) uid:\"(\\S+)\" con:(\\S+) rtm:\\d+\\.\\d*/(?<duration>\\d+) hct:\"(\\S+)\" hac:\"(.*)\" sid:\"(.*)\" x-user-id:\"(.*)\" x-client-id:\"(.*)\" x-client-info:\"(.*)\"";
+var HTTPD_SIT_LOGENTRY_REGEXP_STRING = "^(\\S+) (\\S+) (\\S+) \\[([\\w:/]+\\s[+\\-]\\d{4})\\] \"(.+?)\" (\\d{3}) (\\S+) \"([^\"]*)\" \"([^\"]+)\" pid:(\\S+) uid:(\\S+) con:(\\S+) cbs:(\\S+) ckr:(\\S+) cst:(\\S+) rtm:\\d+/(?<duration>\\S+) .*";
 
 var CATALINA_SIT_ACCESS_LOG_PARSER = new AccessLogLineParser(
     "catalina-sit",
@@ -33,6 +33,7 @@ var CATALINA_SIT_ACCESS_LOG_PARSER = new AccessLogLineParser(
     19,
     "dd/MMM/yyyy:HH:mm:ss Z",
     "^([a-z]{1,15}+(\\.[a-z]{3,4}|\\d?))$",
+    [],
     [],
     [],
     1
@@ -45,7 +46,13 @@ var CATALINA_SIT_GEORGE_API_ACCESS_LOG_PARSER = new AccessLogLineParser(
     "dd/MMM/yyyy:HH:mm:ss Z",
     "^([a-z]{1,15}+(\\.[a-z]{3,4}|\\d?))$",
     [],
-    ["X-ADVISOR-ID:", "images/image?variant=", "api/my/images/", "api/my/orders/"],
+    ["georgeclient-advisor", "X-ADVISOR-ID:"],
+    [
+        new LogEntrySuccessPredicate("GET", "/my/images/*", 404),
+        new LogEntrySuccessPredicate("*", "/my/accounts/*/images/image", 404),
+        new LogEntrySuccessPredicate("GET", "/my/transactions/*/attachment/thumbnail", 404),
+        new LogEntrySuccessPredicate("GET", "/my/orders", 404)
+    ],
     1
 );
 
@@ -55,6 +62,7 @@ var CATALINA_SIT_GEORGE_IMPORTER_ACCESS_LOG_PARSER = new AccessLogLineParser(
     19,
     "dd/MMM/yyyy:HH:mm:ss Z",
     "^([a-z\-])+$",
+    [],
     [],
     [],
     1
@@ -68,17 +76,24 @@ var HTTPD_SIT_ACCESS_LOG_PARSER = new AccessLogLineParser(
     "^([a-z]{1,15}+(\\.[a-z]{3,4}|\\d?))$",
     [],
     [],
+    [],
     1000
 );
 
 var HTTPD_SIT_GEORGE_API_ACCESS_LOG_PARSER = new AccessLogLineParser(
-    "httpd-sit-geimp",
+    "httpd-sit-geapi",
     HTTPD_SIT_LOGENTRY_REGEXP_STRING,
     16,
     "dd/MMM/yyyy:HH:mm:ss Z",
     "^([a-z]{1,15}+(\\.[a-z]{3,4}|\\d?))$",
     [],
-    ["X-ADVISOR-ID:", "images/image?variant=", "api/my/images/", "api/my/orders/"],
+    ["georgeclient-advisor", "X-ADVISOR-ID:"],
+    [
+        new LogEntrySuccessPredicate("GET", "/my/images/*", 404),
+        new LogEntrySuccessPredicate("*", "/my/accounts/*/images/image", 404),
+        new LogEntrySuccessPredicate("GET", "/my/transactions/*/attachment/thumbnail", 404),
+        new LogEntrySuccessPredicate("GET", "/my/orders", 404)
+    ],
     1000
 );
 
@@ -88,6 +103,7 @@ var CUSTOM_ACCESS_LOG_PARSER = new AccessLogLineParser(
     16,
     "dd/MMM/yyyy:HH:mm:ss Z",
     "^([a-z]{1,15}+(\\.[a-z]{3,4}|\\d?))$",
+    [],
     [],
     [],
     1000
@@ -146,9 +162,10 @@ function parseLogfiles(accessLogParser, fileNames) {
 }
 
 function createAccessLogReportProperties(accessLogLineParser) {
-    java.lang.System.setProperty("jmeter.parser.name", accessLogLineParser.name);
-    java.lang.System.setProperty("jmeter.parser.includes", JSON.stringify(accessLogLineParser.logLineIncludeFilters));
-    java.lang.System.setProperty("jmeter.parser.excludes", JSON.stringify(accessLogLineParser.logLineExcludeFilters));
+    java.lang.System.setProperty("report.parser.name", accessLogLineParser.name);
+    java.lang.System.setProperty("report.parser.includes", JSON.stringify(accessLogLineParser.logLineIncludeFilters));
+    java.lang.System.setProperty("report.parser.excludes", JSON.stringify(accessLogLineParser.logLineExcludeFilters));
+    java.lang.System.setProperty("report.parser.logentry.predicates", JSON.stringify(accessLogLineParser.logEntrySuccessPredicates));
 }
 
 function isCompressedLogFile(logFile) {
@@ -205,6 +222,9 @@ function parseLogfile(accessLogParser, logFile, reader) {
 
         var endTime = java.lang.System.currentTimeMillis();
 
+        java.lang.System.setProperty("report.parser.lines.ignored", ignoredCount);
+        java.lang.System.setProperty("report.parser.lines.errors", errorCount);
+
         println("[INFO] Parsing '" + logFile.getAbsolutePath() + "' containing " + lineNumber + " lines took " + (endTime - startTime) + " ms");
 
         if (ignoredCount > 0) {
@@ -240,7 +260,7 @@ function addToReportModel(logEntry) {
     var responseCode = logEntry.responseCode;
     var timeTaken = logEntry.timeTakenMillis;
 
-    if (logEntry.isSuccess()) {
+    if (logEntry.isSuccess) {
         JAMON_REPORT_MODEL.addSuccess(monitorName,
             timestamp,
             timeTaken);
@@ -251,7 +271,7 @@ function addToReportModel(logEntry) {
             timestamp,
             timeTaken,
             responseCode,
-            logEntry.getHttpResponseCodeName());
+            logEntry.getRawLine());
     }
 }
 
@@ -268,7 +288,7 @@ function writeHtmlReport(fileName, title, subtitle) {
     var sortColumn = org.apache.jmeter.extra.report.sla.JMeterHtmlReportWriter.DISPLAY_HEADER_LABEL_INDEX;
 
     // set up the HTML report
-    var reportWriter = new org.apache.jmeter.extra.report.sla.JMeterHtmlReportWriter(JAMON_REPORT_MODEL, sortColumn, sortOrder);
+    var reportWriter = new org.apache.jmeter.extra.report.sla.JMeterHtmlReportWriter(JAMON_REPORT_MODEL, sortColumn, sortOrder, null);
     reportWriter.setReportTitle(title);
     reportWriter.setReportSubtitle(subtitle);
 
@@ -366,7 +386,7 @@ function CLI(defaultParser) {
  * @param logLineExcludeFilters Simple string filter applied to an un-parsed log line
  * @param toMillisDivisor the multipler to convert the response time to milli seconds
  */
-function AccessLogLineParser(name, logEntryRegExpString, logEntryNrOfMatches, logEntryDataFormat, resourcePathRegExpString, logLineIncludeFilters, logLineExcludeFilters, toMillisDivisor) {
+function AccessLogLineParser(name, logEntryRegExpString, logEntryNrOfMatches, logEntryDataFormat, resourcePathRegExpString, logLineIncludeFilters, logLineExcludeFilters, logEntrySuccessPredicates, toMillisDivisor) {
 
     this.name = name;
     this.logEntryRegExpString = logEntryRegExpString;
@@ -377,6 +397,7 @@ function AccessLogLineParser(name, logEntryRegExpString, logEntryNrOfMatches, lo
     this.resourcePathRegExp = java.util.regex.Pattern.compile(resourcePathRegExpString);
     this.logLineIncludeFilters = logLineIncludeFilters;
     this.logLineExcludeFilters = logLineExcludeFilters;
+    this.logEntrySuccessPredicates = logEntrySuccessPredicates;
     this.toMillisDivisor = toMillisDivisor;
 
     /**
@@ -459,6 +480,10 @@ function AccessLogLineParser(name, logEntryRegExpString, logEntryNrOfMatches, lo
         return result;
     };
 
+    this.hasLogEntrySuccessPredicates = function () {
+        return this.logEntrySuccessPredicates != null && this.logEntrySuccessPredicates.length > 0;
+    }
+
     /**
      * Parse a single line of the HTTPD access log and add it to the report model.
      *
@@ -521,6 +546,20 @@ function AccessLogLineParser(name, logEntryRegExpString, logEntryNrOfMatches, lo
             var timeTakenMillis = Math.round(parseInt(duration) / this.toMillisDivisor);
             var collapsedUrl = this.createCollapsedUrl(requestUrl);
 
+            // determine if this was a successful request
+
+            var isSuccess = false;
+
+            if (this.hasLogEntrySuccessPredicates()) {
+                for (i = 0; i < logEntrySuccessPredicates.length && !isSuccess; i++) {
+                    logEntrySuccessPredicate = logEntrySuccessPredicates[i];
+                    isSuccess = isSuccess || logEntrySuccessPredicate.isSuccess(requestHttpMethod, collapsedUrl, responseCode);
+                }
+            }
+            else {
+                isSuccess = responseCode >= 200 && responseCode < 400;
+            }
+
             // create the LogEntry instance
 
             return new LogEntry(
@@ -537,7 +576,8 @@ function AccessLogLineParser(name, logEntryRegExpString, logEntryNrOfMatches, lo
                 referer,
                 userAgent,
                 requestParams,
-                timeTakenMillis);
+                timeTakenMillis,
+                isSuccess);
         }
         catch (e) {
             println("[WARN] Failed to parse the following line : " + line);
@@ -549,13 +589,50 @@ function AccessLogLineParser(name, logEntryRegExpString, logEntryNrOfMatches, lo
 }
 
 // ==========================================================================
+// LogEntrySuccessPredicate
+// ==========================================================================
+
+function LogEntrySuccessPredicate(requestMethod, collapsedUrlPart, responseCode) {
+
+    /** the HTTP requestMethod, e.g. "PUT" */
+    this.requestMethod = requestMethod;
+
+    /** the part of the collapsed URL top match */
+    this.collapsedUrlPart = collapsedUrlPart;
+
+    /** the HTTP response code to be considered successful */
+    this.responseCode = responseCode;
+
+    this.isSuccess = function (requestMethod, collapsedUrl, responseCode) {
+
+        if (responseCode >= 200 && responseCode < 400) {
+            return true;
+        }
+
+        if (collapsedUrl.contains(collapsedUrlPart) && this.responseCode == responseCode) {
+            return this.requestMethod == "*" || this.requestMethod == requestMethod
+        }
+
+        return false;
+    }
+
+    this.toString = function () {
+        var buffer = new java.lang.StringBuilder();
+        buffer.append("requestMethod=").append(this.requestMethod).append("\n");
+        buffer.append("collapsedUrlPart=").append(this.collapsedUrlPart).append("\n");
+        buffer.append("responseCode=").append(this.responseCode).append("\n");
+        return buffer.toString();
+    }
+}
+
+// ==========================================================================
 // LogEntry
 // ==========================================================================
 
 /**
  * Encapsulates a successfully parsed line from the access log.
  */
-function LogEntry(logFile, lineNumber, line, ipAddress, timestamp, requestUrl, collapsedUrl, requestMethod, responseCode, bytesSent, referer, userAgent, requestParams, timeTakenMillis) {
+function LogEntry(logFile, lineNumber, line, ipAddress, timestamp, requestUrl, collapsedUrl, requestMethod, responseCode, bytesSent, referer, userAgent, requestParams, timeTakenMillis, isSuccess) {
 
     if (responseCode < 100 || responseCode > 506) {
         throw "Invalid responseCode : " + responseCode;
@@ -622,6 +699,9 @@ function LogEntry(logFile, lineNumber, line, ipAddress, timestamp, requestUrl, c
 
     /** the response time in milliseconds */
     this.timeTakenMillis = timeTakenMillis;
+
+    /** is this considered a successful request */
+    this.isSuccess = isSuccess;
 
     this.toString = function () {
         var buffer = new java.lang.StringBuilder();
@@ -712,13 +792,8 @@ function LogEntry(logFile, lineNumber, line, ipAddress, timestamp, requestUrl, c
         return "HTTP Code " + responseCode;
     };
 
-    /**
-     * Decide if this HTTP response code is considered an success. This method can
-     * be customized if you have your own ideas what a successful call look like, e.g.
-     * ignoring "404" for certain URLs.
-     */
-    this.isSuccess = function () {
-        return (this.responseCode >= 200 && this.responseCode < 400);
+    this.getRawLine = function () {
+        return line;
     }
 }
 

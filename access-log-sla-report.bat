@@ -1,1 +1,1 @@
-$JAVA_HOME/bin/jrunscript -cp .\lib\jmeter-sla-report-1.0.0.jar;.\lib\commons-compress-1.10.jar;.\lib\jamon-2.81.jar .\src\main\js\access-log-sla-report.js %*
+$JAVA_HOME/bin/jrunscript -cp .\lib\commons-cli-1.3.1;.\lib\commons-compress-1.11.jar;.\lib\commons-lang3-3.3.2.jar;.\lib\jamon-2.81.jar;.\lib\jmeter-sla-report-1.0.2.jar .\src\main\js\access-log-sla-report.js %*
