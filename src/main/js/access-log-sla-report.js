@@ -384,6 +384,7 @@ function CLI(defaultParser) {
  * @param resourcePathRegExpString RegExp to detect a resource path part in an URL
  * @param logLineIncludeFilters Simple string filter applied to an un-parsed log line
  * @param logLineExcludeFilters Simple string filter applied to an un-parsed log line
+ * @param logEntrySuccessPredicates List of predicates to consider non-2XX result codes as good
  * @param toMillisDivisor the multipler to convert the response time to milli seconds
  */
 function AccessLogLineParser(name, logEntryRegExpString, logEntryNrOfMatches, logEntryDataFormat, resourcePathRegExpString, logLineIncludeFilters, logLineExcludeFilters, logEntrySuccessPredicates, toMillisDivisor) {
