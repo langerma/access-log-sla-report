@@ -60,10 +60,18 @@ usage: access-log-sla-report
 Execute the following command line parses some Apache HTTPD access logs
 
 ```
-george-access-log-sla-report> ./access-log-sla-report.sh ./src/test/data/httpd-access.log 
+./access-log-sla-report.sh -p httpd-sit-geapi ./src/test/data/httpd-access.log 
 [INFO] Parsing the following number of file(s) : 1
 [INFO] Parsing '/Volumes/data/work/beeone/george/george-tools/george-access-log-sla-report/./src/test/data/httpd-access.log' containing 13 lines took 187 ms
 [INFO] The following number of lines were ignored : 1
+```
+
+Execute the following command line parses some Apache Tomcat access logs
+
+```
+./access-log-sla-report.sh -p catalina-sit-geapi ./src/test/data/catalina-access-log.txt
+[INFO] Parsing the following number of file(s) : 1
+[INFO] Parsing '/Users/sgoeschl/work/github/sgoeschl/access-log-sla-report/./src/test/data/catalina-access-log.txt' containing 24 lines took 160 ms
 ```
 
 The application also supports compressed access logs, e.g.
@@ -144,113 +152,4 @@ The following tools are required to build the project
 The following tools are required to run the project
 
 * JDK 1.8
-
-# 8. sIT Access Log Format
-
-The following section describes the internal access log format for Apache HTTPD and Apache Tomcat
-
-## 8.1 Apache HTTPD Access Log
-
-```
-Consolidated log format (Apache access log):
-
--- common (combined default)
-%h              Remote hostname/IP [string]
-%v              Canonical server name (vhost) [string]
-%u              Remote user (if authenticated) [string]
-%t              Request reception time [18/Sep/2011:19:18:28 -0400]
-%r              First line of request [string]
-%>s             Final request status [number]
-%b              Response bytes excluding headers [string]
-%{Referer}i     Incoming Referer header [string]
-%{User-Agent}i  Incoming UA header [string]
-
--- extension (process)
-pid             Process and thread ID of the request serving child [number/number]
-uid             Unique request ID [string{24}]
-
--- extension (connection)
-con             Local connection info [IP/port]
-cbs             Connection bytes received and sent, including headers [bytes/bytes]
-ckr             Connection keep-alive requests [number]
-cst             Connection status when response is completed [char: "X"(aborted before completed),
-                                                                    "+"(keep alive after response),
-                                                                    "-"(close after response)]
--- extension (response)
-rtm             Response time [s/us]
-rhd             Response handler [string: e.g. "proxy-server"/"weblogic-handler"(upstream server),
-                                               "-"(local content)]
-rcs             Response cache status [string: "cache-hit"(served from cache),
-                                               "cache-revalidate"(revalidated and served from cache),
-                                               "cache-miss"(served from upstream),
-                                               "cache-invalidate"(invalidated by request method)]
--- extension (compression)
-cmp             Compression ratio (string)
-
--- extension (header)
-hct             Content-Type sent to the client [string]
-hco             Cookies sent from/to the client [string/string]
-hac             Accept* headers sent from the client [string]
-hxa             X-* headers sent from/to the client [string/string]
-
--- extension (balancer)
-brn             Balancer routing cookie or request parameter name [string]
-bsr             Balancer session route received from client [string]
-bwr             Balancer session route for the chosen worker [string]
-brc             Whether the balancer route has changed or was not provided [char]
-
--- extension (SSL)
-ssl             Whether HTTPS is being used [string]
-sve             SSL protocol version in use [string: SSLv3, TLSv1, TLSv1.1, TLSv1.2]
-sci             SSL cipher specification name [string]
-sck             SSL cipher key size actually used and possible [string/string]
-sid             SSL session ID [string]
-sre             Whether the SSL session is initial or resumed [string: "Initial", "Resumed"]
-sni             SNI TLS extension content [string]
-srp             SRP user name [string]
-scc             SSL client certificate subject/issuer CN [string/string]
-scv             SSL client verification status [string: "NONE", "SUCCESS", "GENEROUS", "FAILED:reason"]
-sar             Whether access was denied due to SSL restrictions [char]
-```
-   
-## 8.2 Tomcat Access log
-
-```
--- common (combined default)
-%h              Remote host name (or IP address if enableLookups for the connector is false) [string]
-%v              Local server name [string]
-%u              Remote user that was authenticated (if any), else '-' [string]
-%t              Request reception time in Common Log Format
-%r              First line of the request (method and request URI) [string]
-%s              HTTP status code of the response [number]
-%b              Bytes sent, excluding HTTP headers, or '-' if zero [string]
-%{Referer}i     Incoming Referer header [string]
-%{User-Agent}i  Incoming UA header [string]
-
--- extension (process)
-tid             Current request thread name [string]
-uid             Unique request ID from 'X-REQUEST-ID' as UUID [string{36}]
-
--- extension (connection)
-con             Local connection info [IP/port]
-
--- extension (response)
-rtm             Response time [s/ms]
-
--- extension (header)
-hct             Content-Type sent to the client [string]
-hac             The Accept headers sent from the client [string]
-
--- extension (servlet engine)
-sid             Session identifier [string]
-
--- extension (application)
--- These custom values can be extracted from cookie or header and need to go to a context.xml
-x-user-id       Custom user id calling server [string]
-x-client-id     Custom client id calling server, e.g. "george-go" [string]
-x-client-info   Custom other data [string]    
-```
-
- 
-
 

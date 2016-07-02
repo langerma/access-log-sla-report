@@ -81,6 +81,52 @@ public class SitCatalinaAccessLogGrokTest {
     }
 
     @Test
+    public void shouldExtractRequiredAttributesFormGeorgeApiAccessLog01() throws Exception {
+
+        // 127.0.0.1 george.beeone.lan - [13/Apr/2016:11:13:06 +0200] "GET /frontend-api/api/swagger.json HTTP/1.0" 200 245765 "https://george.beeone.lan/g/frontend-api-docs/" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/42.0.2311.135 Safari/537.36" tid:http-nio-8080-exec-4 uid:"-" con:127.0.0.1/80 rtm:0.064/64 hct:"application/json" hac:"Accept: application/json;charset=utf-8,*/*, Accept-Encoding: gzip, deflate, sdch, Accept-Language: en-US,en;q=0.8,de;q=0.6,cs;q=0.4" sid:"-" x-user-id:"-" x-client-id:"-" x-client-info:"-"
+
+        final String line = "127.0.0.1 " +
+                "george.beeone.lan " +
+                "- " +
+                "[13/Apr/2016:11:13:06 +0200] " +
+                "\"GET /frontend-api/api/swagger.json HTTP/1.0\" " +
+                "200 " +
+                "245765 " +
+                "\"https://george.beeone.lan/g/frontend-api-docs/\" " +
+                "\"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/42.0.2311.135 Safari/537.36\" " +
+                "tid:http-nio-8080-exec-4 " +
+                "uid:\"-\" " +
+                "con:127.0.0.1/80 " +
+                "rtm:0.064/64 " +
+                "hct:\"application/json\" " +
+                "hac:\"Accept: application/json;charset=utf-8,*/*, Accept-Encoding: gzip, deflate, sdch, Accept-Language: en-US,en;q=0.8,de;q=0.6,cs;q=0.4\" " +
+                "sid:\"-\" " +
+                "x-user-id:\"-\" " +
+                "x-client-id:\"-\" " +
+                "x-client-info:\"-\"";
+
+        final Map<String, Object> map = apply(grok(), line);
+
+        assertEquals(GROK_MATCHES_REQUIRED, map.size());
+        assertEquals("127.0.0.1", map.get("clientip"));
+        assertEquals("george.beeone.lan", map.get("ident"));
+        assertEquals("-", map.get("auth"));
+        assertEquals("13/Apr/2016:11:13:06 +0200", map.get("timestamp"));
+        assertEquals("GET", map.get("verb"));
+        assertEquals("/frontend-api/api/swagger.json", map.get("request"));
+        assertEquals("1.0", map.get("httpversion"));
+        assertEquals("200", map.get("response"));
+        assertEquals("245765", map.get("bytes"));
+        assertEquals("https://george.beeone.lan/g/frontend-api-docs/", map.get("referrer"));
+        assertEquals("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/42.0.2311.135 Safari/537.36", map.get("agent"));
+        assertEquals("http-nio-8080-exec-4", map.get("HOSTNAME"));
+        assertEquals("-", map.get("QS"));
+        assertEquals("127.0.0.1", map.get("IP"));
+        assertEquals("80", map.get("NUMBER"));
+        assertEquals("64", map.get("duration"));
+    }
+
+    @Test
     public void shouldExtractRequiredAttributesFormGeorgeImporterAccessLog() throws Exception {
 
         // "10.198.128.80 10.198.128.81 - [14/Apr/2016:00:03:02 +0200] \"POST /importer-api/importer-api/transactions HTTP/1.1\" 200 82 \"-\" \"Java/1.8.0_73\" tid:catalina-exec-128 uid:\"-\" con:10.198.128.81/30001 rtm:0.128/128 hct:\"application/json\" hac:\"Accept: application/json, Accept-Encoding: -, Accept-Language: -\" sid:\"-\" x-user-id:\"-\" x-client-id:\"-\" x-client-info:\"-\""
