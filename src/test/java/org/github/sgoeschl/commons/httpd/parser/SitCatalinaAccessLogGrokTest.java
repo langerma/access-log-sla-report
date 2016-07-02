@@ -25,11 +25,14 @@ import java.util.Map;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-public class CatalinaAccessLogGrokTest {
+/**
+ * Tests the attribute extractions of the Tomcat access logs using SIT log format.
+ */
+public class SitCatalinaAccessLogGrokTest {
 
-    public static final int GROK_MATCHES_REQUIRED = 27;
+    private static final int GROK_MATCHES_REQUIRED = 27;
     private static final String GROK_PATTERN_PATH = "./patterns/patterns";
-    private static final String GROK_EXPRESSION = "%{COMBINEDAPACHELOG} tid:%{HOSTNAME} uid:%{QS:uid} con:%{IP}/%{NUMBER} rtm:%{NUMBER}/%{INT:duration}";
+    private static final String GROK_EXPRESSION = "%{COMBINEDAPACHELOG} tid:%{HOSTNAME} uid:%{QS} con:%{IP}/%{NUMBER} rtm:%{NUMBER}/%{INT:duration}";
 
     @Test
     public void shouldExtractRequiredAttributesFormGeorgeApiAccessLog() throws Exception {
@@ -71,7 +74,7 @@ public class CatalinaAccessLogGrokTest {
         assertEquals("https://george.beeone.lan/index.html?at=c&devMode=true&ts=1460539633954", map.get("referrer"));
         assertEquals("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/42.0.2311.135 Safari/537.36", map.get("agent"));
         assertEquals("http-nio-8080-exec-1", map.get("HOSTNAME"));
-        assertEquals("c1a82852-f483-ed61-c8f2-c54a391434df", map.get("uid"));
+        assertEquals("c1a82852-f483-ed61-c8f2-c54a391434df", map.get("QS"));
         assertEquals("127.0.0.1", map.get("IP"));
         assertEquals("80", map.get("NUMBER"));
         assertEquals("140", map.get("duration"));
@@ -118,7 +121,7 @@ public class CatalinaAccessLogGrokTest {
         assertEquals("-", map.get("referrer"));
         assertEquals("Java/1.8.0_73", map.get("agent"));
         assertEquals("catalina-exec-128", map.get("HOSTNAME"));
-        assertEquals("-", map.get("uid"));
+        assertEquals("-", map.get("QS"));
         assertEquals("10.198.128.81", map.get("IP"));
         assertEquals("30001", map.get("NUMBER"));
         assertEquals("128", map.get("duration"));

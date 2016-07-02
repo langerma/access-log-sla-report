@@ -24,7 +24,10 @@ import java.util.regex.Pattern;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-public class HttpdAccessLogRegExpTest {
+/**
+ * Tests the attribute extractions of the HTTPDS access logs using SIT log format.
+ */
+public class SitHttpdAccessLogRegExpTest {
 
     public static final int REGEXP_MATCHES_REQUIRED = 16;
     public static final String LOG_ENTRY_PATTERN_STRING = "^(\\S+) (\\S+) (\\S+) \\[([\\w:/]+\\s[+\\-]\\d{4})\\] \"(.+?)\" (\\d{3}) (\\S+) \"([^\"]*)\" \"([^\"]+)\" pid:(\\S+) uid:(\\S+) con:(\\S+) cbs:(\\S+) ckr:(\\S+) cst:(\\S+) rtm:\\d+/(?<duration>\\S+) .*";

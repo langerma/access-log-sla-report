@@ -24,7 +24,10 @@ import java.util.regex.Pattern;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-public class CatalinaAccessLogRegExpTest {
+/**
+ * Tests the attribute extractions of the Tomcat access logs using SIT log format.
+ */
+public class SitCatalinaAccessLogRegExpTest {
     public static final int REGEXP_MATCHES_REQUIRED = 19;
     public static final String LOG_ENTRY_PATTERN_STRING = "^(\\S+) (\\S+) (\\S+) \\[([\\w:/]+\\s[+\\-]\\d{4})\\] \"(.+?)\" (\\d{3}) (\\S+) \"([^\"]+)\" \"([^\"]+)\" tid:(\\S+) uid:\"(\\S+)\" con:(\\S+) rtm:\\d+\\.\\d*/(?<duration>\\d+) hct:\"(\\S+)\" hac:\"(.*)\" sid:\"(.*)\" x-user-id:\"(.*)\" x-client-id:\"(.*)\" x-client-info:\"(.*)\"";
     public static final Pattern LOG_ENTRY_REGEXP = Pattern.compile(LOG_ENTRY_PATTERN_STRING);
