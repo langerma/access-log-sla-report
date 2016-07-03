@@ -37,16 +37,16 @@ Configuration of access logs are wildly different - there is no configuration to
 
 Therefor the script supports multiple access logs formats
 
-| Name  							| Description																			   	|
+| Name                              | Description                                                                               |
 |-----------------------------------|-------------------------------------------------------------------------------------------|
 | common-apache                     | Common Apache log format                                                                  |
 | combined-apache                   | Combined Apache access log                                                                |
-| catalina-sit					    | Tomcat access log using sIT conventions													|
-| catalina-sit-geapi   		        | Tomcat access log using sIT conventions with George API exclude filters					|
-| catalina-sit-geimp        	    | Tomcat access log using sIT conventions for George Importer								| 
-| httpd-sit					        | Apache HTTPD log using sIT conventions													|
-| httpd-sit-geapi       		    | Apache HTTPD log using sIT conventions with George-specififc exclude filters				|
-| custom                		    | Custom format to play around interactively    											|
+| catalina-sit                      | Tomcat access log using sIT conventions                                                   |
+| catalina-sit-geapi                | Tomcat access log using sIT conventions with George API exclude filters                   |
+| catalina-sit-geimp                | Tomcat access log using sIT conventions for George Importer                               | 
+| httpd-sit                         | Apache HTTPD log using sIT conventions                                                    |
+| httpd-sit-geapi                   | Apache HTTPD log using sIT conventions with George-specififc exclude filters              |
+| custom                            | Custom format to play around interactively                                                |
    
    
 # 3. Usage
@@ -187,3 +187,15 @@ The following tools are required to run the project
 %{Referer}i     Incoming Referer header [string]
 %{User-Agent}i  Incoming UA header [string]
 ```
+
+# 9. Some Thoughts Along The Line
+
+## 9.1 Performance
+
+The performance varies depending on the log file format, your custom regular expressions and your CPU power. We use cron job to parse access logs having usually around 5 million lines per day.
+
+Below you find some ball park numbers
+
+| Configuration                     | Throughput                                                                                |
+|-----------------------------------|-------------------------------------------------------------------------------------------|
+| combined-apache                   | 20.0000 lines / sec                                                                       |
