@@ -29,8 +29,8 @@ import java.io.InputStreamReader;
 import static org.junit.Assert.assertTrue;
 
 public class CommonsCompressTest {
-    private final String ACCESS_LOG_GZIP_FILE = "./src/test/data/httpd-access.log.gz";
-    private final String ACCESS_LOG_BZIP2_FILE = "./src/test/data/httpd-access.log.bz2";
+    private final String ACCESS_LOG_GZIP_FILE = "./src/test/data/sit/httpd-access.log.gz";
+    private final String ACCESS_LOG_BZIP2_FILE = "./src/test/data/sit/httpd-access.log.bz2";
 
     @Test
     public void shouldStreamGzipCompressedFile() throws Exception {

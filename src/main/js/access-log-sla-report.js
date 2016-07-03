@@ -30,7 +30,7 @@ var COMMON_APACHE_LOGENTRY_GROK_MATCHES_REQUIRED = 19;
 var COMMON_APACHE_LOGENTRY_GROK_EXPRESSION = "%{COMMONAPACHELOG}";
 
 var COMMON_APACHE_ACCESS_LOG_PARSER = new AccessLogLineParser(
-    "common-apache-log",
+    "common-apache",
     COMMON_APACHE_LOGENTRY_GROK_EXPRESSION,
     COMMON_APACHE_LOGENTRY_GROK_MATCHES_REQUIRED,
     "dd/MMM/yyyy:HH:mm:ss Z",
@@ -47,7 +47,7 @@ var COMMON_APACHE_LOGENTRY_GROK_MATCHES_REQUIRED = 22;
 var COMMON_APACHE_LOGENTRY_GROK_EXPRESSION = "%{COMBINEDAPACHELOG}";
 
 var COMBINED_APACHE_ACCESS_LOG_PARSER = new AccessLogLineParser(
-    "combined-apache-log",
+    "combined-apache",
     COMMON_APACHE_LOGENTRY_GROK_EXPRESSION,
     COMMON_APACHE_LOGENTRY_GROK_MATCHES_REQUIRED,
     "dd/MMM/yyyy:HH:mm:ss Z",
@@ -504,6 +504,10 @@ function AccessLogLineParser(name, grokExpression, nrOfRequiredMatches, logEntry
         // restapi/api/my/configuration ==> restapi/api/my/configuration
         // restapi/api/my/accounts/XXXXXXXXX/stats ==> restapi/api/my/accounts/*/stats
         // restapi/api/my/accounts/YYYYYYYYY/images/image ==> restapi/api/my/accounts/*/images/image
+
+        if (requestURL.equals("/")) {
+            return requestURL;
+        }
 
         var parts = requestURL.split("/");
         var result = new java.lang.StringBuffer();

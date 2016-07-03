@@ -68,7 +68,7 @@
                     <arguments>
                         <argument>-o</argument>
                         <argument>./target/access-log-sla-report.html</argument>
-                        <argument>./src/test/data/httpd-access.log</argument>
+                        <argument>./src/test/data/sit/httpd-access.log</argument>
                     </arguments>
                 </configuration>
             </plugin>
