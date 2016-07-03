@@ -16,13 +16,47 @@
  */
 
 /*
- * This JavaScript parses a sIT Apache & Cataline access logs and uses JAMon
- * to generate a response time report.
+ * This JavaScript parses HTTPD & Tomcat access logs and uses JAMon
+ * to generate a report being suitable for SLAs.
  *
  * @author <a href="mailto:siegfried.goeschl@gmail.com">Siegfried Goeschl</a>
  */
 
 var JAMON_REPORT_MODEL = new org.apache.jmeter.extra.report.sla.JMeterReportModel();
+
+// ===  Apache Common Log ====================================================
+
+var COMMON_APACHE_LOGENTRY_GROK_MATCHES_REQUIRED = 19;
+var COMMON_APACHE_LOGENTRY_GROK_EXPRESSION = "%{COMMONAPACHELOG}";
+
+var COMMON_APACHE_ACCESS_LOG_PARSER = new AccessLogLineParser(
+    "common-apache-log",
+    COMMON_APACHE_LOGENTRY_GROK_EXPRESSION,
+    COMMON_APACHE_LOGENTRY_GROK_MATCHES_REQUIRED,
+    "dd/MMM/yyyy:HH:mm:ss Z",
+    "^([a-z]{1,15}+(\\.[a-z]{3,4}|\\d?))$",
+    [],
+    [],
+    [],
+    1
+);
+
+// ===  Apache Combined Log ==================================================
+
+var COMMON_APACHE_LOGENTRY_GROK_MATCHES_REQUIRED = 22;
+var COMMON_APACHE_LOGENTRY_GROK_EXPRESSION = "%{COMBINEDAPACHELOG}";
+
+var COMBINED_APACHE_ACCESS_LOG_PARSER = new AccessLogLineParser(
+    "combined-apache-log",
+    COMMON_APACHE_LOGENTRY_GROK_EXPRESSION,
+    COMMON_APACHE_LOGENTRY_GROK_MATCHES_REQUIRED,
+    "dd/MMM/yyyy:HH:mm:ss Z",
+    "^([a-z]{1,15}+(\\.[a-z]{3,4}|\\d?))$",
+    [],
+    [],
+    [],
+    1
+);
 
 // === SIT Apache Tomcat ====================================================
 
@@ -119,6 +153,8 @@ var CUSTOM_ACCESS_LOG_PARSER = new AccessLogLineParser(
 );
 
 var PARSER_MAP = {};
+PARSER_MAP[COMMON_APACHE_ACCESS_LOG_PARSER.name] = COMMON_APACHE_ACCESS_LOG_PARSER;
+PARSER_MAP[COMBINED_APACHE_ACCESS_LOG_PARSER.name] = COMBINED_APACHE_ACCESS_LOG_PARSER;
 PARSER_MAP[CATALINA_SIT_ACCESS_LOG_PARSER.name] = CATALINA_SIT_ACCESS_LOG_PARSER;
 PARSER_MAP[CATALINA_SIT_GEORGE_API_ACCESS_LOG_PARSER.name] = CATALINA_SIT_GEORGE_API_ACCESS_LOG_PARSER;
 PARSER_MAP[CATALINA_SIT_GEORGE_IMPORTER_ACCESS_LOG_PARSER.name] = CATALINA_SIT_GEORGE_IMPORTER_ACCESS_LOG_PARSER;
@@ -497,7 +533,7 @@ function AccessLogLineParser(name, grokExpression, nrOfRequiredMatches, logEntry
      * @param logFile the currently processed log file
      * @param lineNumber the currently processing line number
      * @param line current line of the logfile
-     * @return null if the line was not parsable or the processes line
+     * @return null if the line was not parsed
      */
     this.parseLine = function (logFile, lineNumber, line) {
 
@@ -779,6 +815,18 @@ function LogEntry(logFile, lineNumber, line, ipAddress, timestamp, requestUrl, c
         if (responseCode == "415") return "Unsupported Media Type";
         if (responseCode == "416") return "Requested Range Not Satisfiable";
         if (responseCode == "417") return "Expectation Failed";
+        if (responseCode == "418") return "I’m a teapot";
+        if (responseCode == "420") return "Policy Not Fulfilled";
+        if (responseCode == "421") return "Misdirected Request";
+        if (responseCode == "422") return "Unprocessable Entity";
+        if (responseCode == "423") return "Locked";
+        if (responseCode == "424") return "Failed Dependency";
+        if (responseCode == "425") return "Unordered Collection";
+        if (responseCode == "426") return "Upgrade Required";
+        if (responseCode == "428") return "Precondition Required";
+        if (responseCode == "429") return "Too Many Requests";
+        if (responseCode == "430") return "Request Header Fields Too Large";
+        if (responseCode == "451") return "Unavailable For Legal Reasons";
 
         if (responseCode == "500") return "Internal Error";
         if (responseCode == "501") return "Not Implemented";
@@ -791,6 +839,7 @@ function LogEntry(logFile, lineNumber, line, ipAddress, timestamp, requestUrl, c
         if (responseCode == "508") return "Loop Detected";
         if (responseCode == "509") return "Bandwidth Limit Exceeded";
         if (responseCode == "510") return "Not Extended";
+        if (responseCode == "511") return "Network Authentication Required";
 
         return "HTTP Code " + responseCode;
     };
