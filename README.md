@@ -196,6 +196,7 @@ The performance varies depending on the log file format, your custom regular exp
 
 Below you find some ball park numbers
 
-| Configuration                     | Throughput                                                                                |
-|-----------------------------------|-------------------------------------------------------------------------------------------|
-| combined-apache                   | 20.0000 lines / sec                                                                       |
+| Configuration                     | Computer		| Throughput                 |
+|-----------------------------------|---------------|----------------------------|
+| haproxy-sit-geapi                 | iMac i7 2011  |  9.0000 lines / sec        |
+| combined-apache                   | iMac i7 2015  | 20.0000 lines / sec        |
