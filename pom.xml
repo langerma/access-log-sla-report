@@ -64,12 +64,7 @@
                     </execution>
                 </executions>
                 <configuration>
-                    <executable>./access-log-sla-report.${script.extension}</executable>
-                    <arguments>
-                        <argument>-o</argument>
-                        <argument>./target/access-log-sla-report.html</argument>
-                        <argument>./src/test/data/sit/httpd-access.log</argument>
-                    </arguments>
+                    <executable>./testme.${script.extension}</executable>
                 </configuration>
             </plugin>
         </plugins>

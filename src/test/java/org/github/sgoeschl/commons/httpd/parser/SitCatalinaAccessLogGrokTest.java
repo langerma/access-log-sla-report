@@ -20,6 +20,7 @@ import oi.thekraken.grok.api.Grok;
 import oi.thekraken.grok.api.Match;
 import org.junit.Test;
 
+import java.util.Locale;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
@@ -28,14 +29,18 @@ import static org.junit.Assert.assertTrue;
 /**
  * Tests the attribute extractions of the Tomcat access logs using SIT log format.
  */
-public class SitCatalinaAccessLogGrokTest {
+public class SitCatalinaAccessLogGrokTest implements GrokAttributeNames {
 
     private static final int GROK_MATCHES_REQUIRED = 27;
     private static final String GROK_PATTERN_PATH = "./patterns/patterns";
-    private static final String GROK_EXPRESSION = "%{COMBINEDAPACHELOG} tid:%{HOSTNAME} uid:%{QS} con:%{IP}/%{NUMBER} rtm:%{NUMBER}/%{INT:duration}";
+    private static final String GROK_EXPRESSION = "%{COMBINEDAPACHELOG} tid:%{HOSTNAME} uid:%{QS} con:%{IP}/%{NUMBER} rtm:%{NUMBER}/%{INT:time_duration}";
+
+    static {
+        Locale.setDefault(Locale.ENGLISH);
+    }
 
     @Test
-    public void shouldExtractRequiredAttributesFormGeorgeApiAccessLog() throws Exception {
+    public void shouldExtractRequiredAttributesFromGeorgeApiAccessLog() throws Exception {
 
         // "127.0.0.1 george.beeone.lan - [13/Apr/2016:11:27:24 +0200] \"GET /frontend-api/api/my/transactions?pageSize=50&id=2903243c23596c33353e17330d0a2867PRE&_=1460539634488 HTTP/1.0\" 200 7261 \"https://george.beeone.lan/index.html?at=c&devMode=true&ts=1460539633954\" \"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/42.0.2311.135 Safari/537.36\" tid:http-nio-8080-exec-1 uid:\"c1a82852-f483-ed61-c8f2-c54a391434df\" con:127.0.0.1/80 rtm:0.140/140 hct:\"application/json\" hac:\"Accept: application/json; charset=utf-8, Accept-Encoding: gzip, deflate, sdch, Accept-Language: en-US,en;q=0.8,de;q=0.6,cs;q=0.4\" sid:\"-\" x-user-id:\"408732007\" x-client-id:\"-\" x-client-info:\"-\""
 
@@ -62,26 +67,26 @@ public class SitCatalinaAccessLogGrokTest {
         final Map<String, Object> map = apply(grok(), line);
 
         assertEquals(GROK_MATCHES_REQUIRED, map.size());
-        assertEquals("127.0.0.1", map.get("clientip"));
-        assertEquals("george.beeone.lan", map.get("ident"));
-        assertEquals("-", map.get("auth"));
-        assertEquals("13/Apr/2016:11:27:24 +0200", map.get("timestamp"));
-        assertEquals("GET", map.get("verb"));
-        assertEquals("/frontend-api/api/my/transactions?pageSize=50&id=2903243c23596c33353e17330d0a2867PRE&_=1460539634488", map.get("request"));
-        assertEquals("1.0", map.get("httpversion"));
-        assertEquals("200", map.get("response"));
-        assertEquals("7261", map.get("bytes"));
-        assertEquals("https://george.beeone.lan/index.html?at=c&devMode=true&ts=1460539633954", map.get("referrer"));
-        assertEquals("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/42.0.2311.135 Safari/537.36", map.get("agent"));
+        assertEquals("127.0.0.1", map.get(CLIENT_IP));
+        assertEquals("george.beeone.lan", map.get(IDENT));
+        assertEquals("-", map.get(AUTHENTICATION));
+        assertEquals("13/Apr/2016:11:27:24 +0200", map.get(TIMESTAMP));
+        assertEquals("GET", map.get(HTTP_VERB));
+        assertEquals("/frontend-api/api/my/transactions?pageSize=50&id=2903243c23596c33353e17330d0a2867PRE&_=1460539634488", map.get(HTTP_REQUEST));
+        assertEquals("1.0", map.get(HTTP_VERSION));
+        assertEquals("200", map.get(HTTP_STATUS_CODE));
+        assertEquals("7261", map.get(BYTES_READ));
+        assertEquals("https://george.beeone.lan/index.html?at=c&devMode=true&ts=1460539633954", map.get(REFERRER));
+        assertEquals("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/42.0.2311.135 Safari/537.36", map.get(HTTP_USER_AGENT));
         assertEquals("http-nio-8080-exec-1", map.get("HOSTNAME"));
         assertEquals("c1a82852-f483-ed61-c8f2-c54a391434df", map.get("QS"));
         assertEquals("127.0.0.1", map.get("IP"));
         assertEquals("80", map.get("NUMBER"));
-        assertEquals("140", map.get("duration"));
+        assertEquals("140", map.get(TIME_DURATION));
     }
 
     @Test
-    public void shouldExtractRequiredAttributesFormGeorgeApiAccessLog01() throws Exception {
+    public void shouldExtractRequiredAttributesFromGeorgeApiAccessLog01() throws Exception {
 
         // 127.0.0.1 george.beeone.lan - [13/Apr/2016:11:13:06 +0200] "GET /frontend-api/api/swagger.json HTTP/1.0" 200 245765 "https://george.beeone.lan/g/frontend-api-docs/" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/42.0.2311.135 Safari/537.36" tid:http-nio-8080-exec-4 uid:"-" con:127.0.0.1/80 rtm:0.064/64 hct:"application/json" hac:"Accept: application/json;charset=utf-8,*/*, Accept-Encoding: gzip, deflate, sdch, Accept-Language: en-US,en;q=0.8,de;q=0.6,cs;q=0.4" sid:"-" x-user-id:"-" x-client-id:"-" x-client-info:"-"
 
@@ -108,22 +113,22 @@ public class SitCatalinaAccessLogGrokTest {
         final Map<String, Object> map = apply(grok(), line);
 
         assertEquals(GROK_MATCHES_REQUIRED, map.size());
-        assertEquals("127.0.0.1", map.get("clientip"));
-        assertEquals("george.beeone.lan", map.get("ident"));
-        assertEquals("-", map.get("auth"));
-        assertEquals("13/Apr/2016:11:13:06 +0200", map.get("timestamp"));
-        assertEquals("GET", map.get("verb"));
-        assertEquals("/frontend-api/api/swagger.json", map.get("request"));
-        assertEquals("1.0", map.get("httpversion"));
-        assertEquals("200", map.get("response"));
-        assertEquals("245765", map.get("bytes"));
-        assertEquals("https://george.beeone.lan/g/frontend-api-docs/", map.get("referrer"));
-        assertEquals("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/42.0.2311.135 Safari/537.36", map.get("agent"));
+        assertEquals("127.0.0.1", map.get(CLIENT_IP));
+        assertEquals("george.beeone.lan", map.get(IDENT));
+        assertEquals("-", map.get(AUTHENTICATION));
+        assertEquals("13/Apr/2016:11:13:06 +0200", map.get(TIMESTAMP));
+        assertEquals("GET", map.get(HTTP_VERB));
+        assertEquals("/frontend-api/api/swagger.json", map.get(HTTP_REQUEST));
+        assertEquals("1.0", map.get(HTTP_VERSION));
+        assertEquals("200", map.get(HTTP_STATUS_CODE));
+        assertEquals("245765", map.get(BYTES_READ));
+        assertEquals("https://george.beeone.lan/g/frontend-api-docs/", map.get(REFERRER));
+        assertEquals("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/42.0.2311.135 Safari/537.36", map.get(HTTP_USER_AGENT));
         assertEquals("http-nio-8080-exec-4", map.get("HOSTNAME"));
         assertEquals("-", map.get("QS"));
         assertEquals("127.0.0.1", map.get("IP"));
         assertEquals("80", map.get("NUMBER"));
-        assertEquals("64", map.get("duration"));
+        assertEquals("64", map.get(TIME_DURATION));
     }
 
     @Test
@@ -155,22 +160,22 @@ public class SitCatalinaAccessLogGrokTest {
 
         assertEquals(GROK_MATCHES_REQUIRED, map.size());
         assertTrue("No attributes are found", !map.isEmpty());
-        assertEquals("10.198.128.80", map.get("clientip"));
-        assertEquals("10.198.128.81", map.get("ident"));
-        assertEquals("-", map.get("auth"));
-        assertEquals("14/Apr/2016:00:03:02 +0200", map.get("timestamp"));
-        assertEquals("POST", map.get("verb"));
-        assertEquals("/importer-api/importer-api/transactions", map.get("request"));
-        assertEquals("1.1", map.get("httpversion"));
-        assertEquals("200", map.get("response"));
-        assertEquals("82", map.get("bytes"));
-        assertEquals("-", map.get("referrer"));
-        assertEquals("Java/1.8.0_73", map.get("agent"));
+        assertEquals("10.198.128.80", map.get(CLIENT_IP));
+        assertEquals("10.198.128.81", map.get(IDENT));
+        assertEquals("-", map.get(AUTHENTICATION));
+        assertEquals("14/Apr/2016:00:03:02 +0200", map.get(TIMESTAMP));
+        assertEquals("POST", map.get(HTTP_VERB));
+        assertEquals("/importer-api/importer-api/transactions", map.get(HTTP_REQUEST));
+        assertEquals("1.1", map.get(HTTP_VERSION));
+        assertEquals("200", map.get(HTTP_STATUS_CODE));
+        assertEquals("82", map.get(BYTES_READ));
+        assertEquals("-", map.get(REFERRER));
+        assertEquals("Java/1.8.0_73", map.get(HTTP_USER_AGENT));
         assertEquals("catalina-exec-128", map.get("HOSTNAME"));
         assertEquals("-", map.get("QS"));
         assertEquals("10.198.128.81", map.get("IP"));
         assertEquals("30001", map.get("NUMBER"));
-        assertEquals("128", map.get("duration"));
+        assertEquals("128", map.get(TIME_DURATION));
     }
 
     private Grok grok() throws Exception {

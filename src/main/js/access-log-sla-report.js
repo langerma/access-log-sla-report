@@ -61,7 +61,7 @@ var COMBINED_APACHE_ACCESS_LOG_PARSER = new AccessLogLineParser(
 // === SIT Apache Tomcat ====================================================
 
 var CATALINA_SIT_LOGENTRY_GROK_MATCHES_REQUIRED = 27;
-var CATALINA_SIT_LOGENTRY_GROK_EXPRESSION = "%{COMBINEDAPACHELOG} tid:%{HOSTNAME} uid:%{QS} con:%{IP}/%{NUMBER} rtm:%{NUMBER}/%{INT:duration}";
+var CATALINA_SIT_LOGENTRY_GROK_EXPRESSION = "%{COMBINEDAPACHELOG} tid:%{HOSTNAME} uid:%{QS} con:%{IP}/%{NUMBER} rtm:%{NUMBER}/%{INT:time_duration}";
 
 var CATALINA_SIT_ACCESS_LOG_PARSER = new AccessLogLineParser(
     "catalina-sit",
@@ -107,7 +107,7 @@ var CATALINA_SIT_GEORGE_IMPORTER_ACCESS_LOG_PARSER = new AccessLogLineParser(
 // === SIT Apache HTTPD ======================================================
 
 var HTTPD_SIT_LOGENTRY_GROK_MATCHES_REQUIRED = 28;
-var HTTPD_SIT_LOGENTRY_GROK_EXPRESSION = "%{COMBINEDAPACHELOG} pid:%{NUMBER}/%{NUMBER} uid:%{HOSTNAME} con:%{HOST}/%{POSINT} cbs:%{INT}/%{INT} ckr:%{INT} cst:%{NOTSPACE} rtm:%{NUMBER}/%{NUMBER:duration}";
+var HTTPD_SIT_LOGENTRY_GROK_EXPRESSION = "%{COMBINEDAPACHELOG} pid:%{NUMBER}/%{NUMBER} uid:%{HOSTNAME} con:%{HOST}/%{POSINT} cbs:%{INT}/%{INT} ckr:%{INT} cst:%{NOTSPACE} rtm:%{NUMBER}/%{NUMBER:time_duration}";
 
 var HTTPD_SIT_ACCESS_LOG_PARSER = new AccessLogLineParser(
     "httpd-sit",
@@ -138,6 +138,41 @@ var HTTPD_SIT_GEORGE_API_ACCESS_LOG_PARSER = new AccessLogLineParser(
     1000
 );
 
+// === SIT HAProxy===========================================================
+
+var HAPROXY_SIT_LOGENTRY_GROK_MATCHES_REQUIRED = 52;
+var HAPROXY_SIT_LOGENTRY_GROK_EXPRESSION = "%{HAPROXYHTTP}";
+
+var HAPROXY_SIT_ACCESS_LOG_PARSER = new AccessLogLineParser(
+    "haproxy-sit",
+    HAPROXY_SIT_LOGENTRY_GROK_EXPRESSION,
+    HAPROXY_SIT_LOGENTRY_GROK_MATCHES_REQUIRED,
+    "dd/MMM/yyyy:HH:mm:ss.SSS",
+    "^([a-z]{1,15}+(\\.[a-z]{3,4}|\\d?))$",
+    [],
+    [],
+    [],
+    1
+);
+
+var HAPROXY_SIT_GEORGE_API_ACCESS_LOG_PARSER = new AccessLogLineParser(
+    "haproxy-sit-geapi",
+    HAPROXY_SIT_LOGENTRY_GROK_EXPRESSION,
+    HAPROXY_SIT_LOGENTRY_GROK_MATCHES_REQUIRED,
+    "dd/MMM/yyyy:HH:mm:ss.SSS",
+    "^([a-z]{1,15}+(\\.[a-z]{3,4}|\\d?))$",
+    ["/api/my/"],
+    ["georgeclient-advisor", "X-ADVISOR-ID:"],
+    [
+        new LogEntrySuccessPredicate("GET", "/my/images/*", 404),
+        new LogEntrySuccessPredicate("*", "/my/accounts/*/images/image", 404),
+        new LogEntrySuccessPredicate("GET", "/my/transactions/*/attachment/thumbnail", 404),
+        new LogEntrySuccessPredicate("GET", "/my/orders", 404)
+    ],
+    1
+);
+
+
 // === Custom ===============================================================
 
 var CUSTOM_ACCESS_LOG_PARSER = new AccessLogLineParser(
@@ -160,6 +195,8 @@ PARSER_MAP[CATALINA_SIT_GEORGE_API_ACCESS_LOG_PARSER.name] = CATALINA_SIT_GEORGE
 PARSER_MAP[CATALINA_SIT_GEORGE_IMPORTER_ACCESS_LOG_PARSER.name] = CATALINA_SIT_GEORGE_IMPORTER_ACCESS_LOG_PARSER;
 PARSER_MAP[HTTPD_SIT_ACCESS_LOG_PARSER.name] = HTTPD_SIT_ACCESS_LOG_PARSER;
 PARSER_MAP[HTTPD_SIT_GEORGE_API_ACCESS_LOG_PARSER.name] = HTTPD_SIT_GEORGE_API_ACCESS_LOG_PARSER;
+PARSER_MAP[HAPROXY_SIT_ACCESS_LOG_PARSER.name] = HAPROXY_SIT_ACCESS_LOG_PARSER;
+PARSER_MAP[HAPROXY_SIT_GEORGE_API_ACCESS_LOG_PARSER.name] = HAPROXY_SIT_GEORGE_API_ACCESS_LOG_PARSER;
 PARSER_MAP[CUSTOM_ACCESS_LOG_PARSER.name] = CUSTOM_ACCESS_LOG_PARSER;
 
 function main(arguments) {
@@ -461,9 +498,10 @@ function AccessLogLineParser(name, grokExpression, nrOfRequiredMatches, logEntry
             for (i = 0; i < this.logLineIncludeFilters.length; i++) {
                 var logLineIncludeFilter = this.logLineIncludeFilters[i];
                 if (logLine.contains(logLineIncludeFilter)) {
-                    return false;
+                    return true;
                 }
             }
+
             return false;
         }
 
@@ -471,7 +509,7 @@ function AccessLogLineParser(name, grokExpression, nrOfRequiredMatches, logEntry
             for (i = 0; i < this.logLineExcludeFilters.length; i++) {
                 var logLineExcludeFilter = this.logLineExcludeFilters[i];
                 if (logLine.contains(logLineExcludeFilter)) {
-                    return false;
+                    return false
                 }
             }
         }
@@ -567,15 +605,15 @@ function AccessLogLineParser(name, grokExpression, nrOfRequiredMatches, logEntry
 
             // access the attributes
 
-            var ipAddress = map.get("clientip");
+            var ipAddress = map.get("client_ip");
             var dateString = map.get("timestamp");
-            var requestHttpMethod = map.get("verb");
-            var request = map.get("request");
-            var responseCode = map.get("response");
-            var bytesSent = map.get("bytes");
+            var requestHttpMethod = map.get("http_verb");
+            var request = map.get("http_request");
+            var responseCode = map.get("http_status_code");
+            var bytesSent = map.get("bytes_read");
             var referrer = map.get("referrer");
             var userAgent = map.get("agent");
-            var duration = map.get("duration");
+            var duration = map.get("time_duration");
 
             // split the "request" into its into URL and parameters
 
@@ -624,11 +662,12 @@ function AccessLogLineParser(name, grokExpression, nrOfRequiredMatches, logEntry
         }
         catch (e) {
             println("[WARN] Failed to parse the following line : " + line);
-            println(e);
+            if (e instanceof java.lang.Exception) {
+                e.printStackTrace();
+            }
             return null;
         }
     };
-
 }
 
 // ==========================================================================

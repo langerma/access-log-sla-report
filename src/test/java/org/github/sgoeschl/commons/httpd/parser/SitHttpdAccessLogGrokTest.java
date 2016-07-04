@@ -20,6 +20,7 @@ import oi.thekraken.grok.api.Grok;
 import oi.thekraken.grok.api.Match;
 import org.junit.Test;
 
+import java.util.Locale;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
@@ -27,14 +28,18 @@ import static org.junit.Assert.assertEquals;
 /**
  * Tests the attribute extractions of the HTTPD access logs using SIT log format.
  */
-public class SitHttpdAccessLogGrokTest {
+public class SitHttpdAccessLogGrokTest implements GrokAttributeNames {
 
     private static final int GROK_MATCHES_REQUIRED = 28;
     private static final String GROK_PATTERN_PATH = "./patterns/patterns";
-    private static final String GROK_EXPRESSION = "%{COMBINEDAPACHELOG} pid:%{NUMBER}/%{NUMBER} uid:%{HOSTNAME} con:%{HOST}/%{POSINT} cbs:%{INT}/%{INT} ckr:%{INT} cst:%{NOTSPACE} rtm:%{NUMBER}/%{NUMBER:duration}";
+    private static final String GROK_EXPRESSION = "%{COMBINEDAPACHELOG} pid:%{NUMBER}/%{NUMBER} uid:%{HOSTNAME} con:%{HOST}/%{POSINT} cbs:%{INT}/%{INT} ckr:%{INT} cst:%{NOTSPACE} rtm:%{NUMBER}/%{NUMBER:time_duration}";
+
+    static {
+        Locale.setDefault(Locale.ENGLISH);
+    }
 
     @Test
-    public void shouldExtractRequiredAttributesFormGeorgeApiAccessLog() throws Exception {
+    public void shouldExtractRequiredAttributesFromGeorgeApiAccessLog() throws Exception {
 
         final String line = "127.0.0.1 localhost " +
                 "- " +
@@ -77,18 +82,18 @@ public class SitHttpdAccessLogGrokTest {
         final Map<String, Object> map = apply(grok(), line);
 
         assertEquals(GROK_MATCHES_REQUIRED, map.size());
-        assertEquals("127.0.0.1", map.get("clientip"));
-        assertEquals("localhost", map.get("ident"));
-        assertEquals("-", map.get("auth"));
-        assertEquals("10/Oct/2015:00:00:55 +0200", map.get("timestamp"));
-        assertEquals("GET", map.get("verb"));
-        assertEquals("/restapi/api/protected/receivers/private/top?pageSize=99999&_=1444427757085", map.get("request"));
-        assertEquals("1.1", map.get("httpversion"));
-        assertEquals("200", map.get("response"));
-        assertEquals("1961", map.get("bytes"));
-        assertEquals("https://localhost/index.html?at=c&ts=1444427756237", map.get("referrer"));
-        assertEquals("Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/45.0.2454.93 Safari/537.36 OPR/32.0.1948.69", map.get("agent"));
-        assertEquals("2048125", map.get("duration"));
+        assertEquals("127.0.0.1", map.get(CLIENT_IP));
+        assertEquals("localhost", map.get(IDENT));
+        assertEquals("-", map.get(AUTHENTICATION));
+        assertEquals("10/Oct/2015:00:00:55 +0200", map.get(TIMESTAMP));
+        assertEquals("GET", map.get(HTTP_VERB));
+        assertEquals("/restapi/api/protected/receivers/private/top?pageSize=99999&_=1444427757085", map.get(HTTP_REQUEST));
+        assertEquals("1.1", map.get(HTTP_VERSION));
+        assertEquals("200", map.get(HTTP_STATUS_CODE));
+        assertEquals("1961", map.get(BYTES_READ));
+        assertEquals("https://localhost/index.html?at=c&ts=1444427756237", map.get(REFERRER));
+        assertEquals("Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/45.0.2454.93 Safari/537.36 OPR/32.0.1948.69", map.get(HTTP_USER_AGENT));
+        assertEquals("2048125", map.get(TIME_DURATION));
     }
 
     @Test
@@ -136,18 +141,18 @@ public class SitHttpdAccessLogGrokTest {
         final Map<String, Object> map = apply(grok(), line);
 
         assertEquals(GROK_MATCHES_REQUIRED, map.size());
-        assertEquals("10.198.253.234", map.get("clientip"));
-        assertEquals("georgeinternal.erste-group.net", map.get("ident"));
-        assertEquals("-", map.get("auth"));
-        assertEquals("08/May/2016:17:02:30 +0200", map.get("timestamp"));
-        assertEquals("GET", map.get("verb"));
-        assertEquals("/geapi/api/my/configuration?_=1462719739021", map.get("request"));
-        assertEquals("1.1", map.get("httpversion"));
-        assertEquals("200", map.get("response"));
-        assertEquals("216", map.get("bytes"));
-        assertEquals("", map.get("referrer"));
-        assertEquals("Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.94 Safari/537.36", map.get("agent"));
-        assertEquals("14691", map.get("duration"));
+        assertEquals("10.198.253.234", map.get(CLIENT_IP));
+        assertEquals("georgeinternal.erste-group.net", map.get(IDENT));
+        assertEquals("-", map.get(AUTHENTICATION));
+        assertEquals("08/May/2016:17:02:30 +0200", map.get(TIMESTAMP));
+        assertEquals("GET", map.get(HTTP_VERB));
+        assertEquals("/geapi/api/my/configuration?_=1462719739021", map.get(HTTP_REQUEST));
+        assertEquals("1.1", map.get(HTTP_VERSION));
+        assertEquals("200", map.get(HTTP_STATUS_CODE));
+        assertEquals("216", map.get(BYTES_READ));
+        assertEquals("", map.get(REFERRER));
+        assertEquals("Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.94 Safari/537.36", map.get(HTTP_USER_AGENT));
+        assertEquals("14691", map.get(TIME_DURATION));
     }
 
     private Grok grok() throws Exception {
