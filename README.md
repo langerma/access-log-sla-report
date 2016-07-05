@@ -42,10 +42,12 @@ Therefor the script supports multiple access logs formats
 | common-apache                     | Common Apache log format                                                                  |
 | combined-apache                   | Combined Apache access log                                                                |
 | catalina-sit                      | Tomcat access log using sIT conventions                                                   |
-| catalina-sit-geapi                | Tomcat access log using sIT conventions with George API exclude filters                   |
-| catalina-sit-geimp                | Tomcat access log using sIT conventions for George Importer                               | 
+| catalina-sit-geapi                | Tomcat access log using sIT conventions with George API filters                   		|
+| catalina-sit-geimp                | Tomcat access log using sIT conventions with George Importer filters                      | 
 | httpd-sit                         | Apache HTTPD log using sIT conventions                                                    |
-| httpd-sit-geapi                   | Apache HTTPD log using sIT conventions with George-specififc exclude filters              |
+| httpd-sit-geapi                   | Apache HTTPD log using sIT conventions with George API filters				            |
+| haproxy                           | HAProxy log                                           								    |
+| haproxy-sit-geapi                 | HAProxy log with George API filters                     								    |
 | custom                            | Custom format to play around interactively                                                |
    
    
