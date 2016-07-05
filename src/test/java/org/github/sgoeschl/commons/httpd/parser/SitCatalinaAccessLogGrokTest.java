@@ -31,9 +31,9 @@ import static org.junit.Assert.assertTrue;
  */
 public class SitCatalinaAccessLogGrokTest implements GrokAttributeNames {
 
-    private static final int GROK_MATCHES_REQUIRED = 27;
+    private static final int GROK_MATCHES_REQUIRED = 28;
     private static final String GROK_PATTERN_PATH = "./patterns/patterns";
-    private static final String GROK_EXPRESSION = "%{COMBINEDAPACHELOG} tid:%{HOSTNAME} uid:%{QS} con:%{IP}/%{NUMBER} rtm:%{NUMBER}/%{INT:time_duration}";
+    private static final String GROK_EXPRESSION = "%{COMBINEDAPACHELOG} tid:%{HOSTNAME} uid:%{QS} con:%{IPORHOST}/%{POSINT} rtm:%{NUMBER}/%{INT:time_duration}";
 
     static {
         Locale.setDefault(Locale.ENGLISH);
@@ -80,8 +80,8 @@ public class SitCatalinaAccessLogGrokTest implements GrokAttributeNames {
         assertEquals("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/42.0.2311.135 Safari/537.36", map.get(HTTP_USER_AGENT));
         assertEquals("http-nio-8080-exec-1", map.get("HOSTNAME"));
         assertEquals("c1a82852-f483-ed61-c8f2-c54a391434df", map.get("QS"));
-        assertEquals("127.0.0.1", map.get("IP"));
-        assertEquals("80", map.get("NUMBER"));
+        assertEquals("127.0.0.1", map.get("IPORHOST"));
+        assertEquals("80", map.get("POSINT"));
         assertEquals("140", map.get(TIME_DURATION));
     }
 
@@ -126,8 +126,8 @@ public class SitCatalinaAccessLogGrokTest implements GrokAttributeNames {
         assertEquals("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/42.0.2311.135 Safari/537.36", map.get(HTTP_USER_AGENT));
         assertEquals("http-nio-8080-exec-4", map.get("HOSTNAME"));
         assertEquals("-", map.get("QS"));
-        assertEquals("127.0.0.1", map.get("IP"));
-        assertEquals("80", map.get("NUMBER"));
+        assertEquals("127.0.0.1", map.get("IPORHOST"));
+        assertEquals("80", map.get("POSINT"));
         assertEquals("64", map.get(TIME_DURATION));
     }
 
@@ -173,8 +173,8 @@ public class SitCatalinaAccessLogGrokTest implements GrokAttributeNames {
         assertEquals("Java/1.8.0_73", map.get(HTTP_USER_AGENT));
         assertEquals("catalina-exec-128", map.get("HOSTNAME"));
         assertEquals("-", map.get("QS"));
-        assertEquals("10.198.128.81", map.get("IP"));
-        assertEquals("30001", map.get("NUMBER"));
+        assertEquals("10.198.128.81", map.get("IPORHOST"));
+        assertEquals("30001", map.get("POSINT"));
         assertEquals("128", map.get(TIME_DURATION));
     }
 

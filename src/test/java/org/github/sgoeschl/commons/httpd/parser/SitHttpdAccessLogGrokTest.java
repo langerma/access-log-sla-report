@@ -30,9 +30,9 @@ import static org.junit.Assert.assertEquals;
  */
 public class SitHttpdAccessLogGrokTest implements GrokAttributeNames {
 
-    private static final int GROK_MATCHES_REQUIRED = 28;
+    private static final int GROK_MATCHES_REQUIRED = 27;
     private static final String GROK_PATTERN_PATH = "./patterns/patterns";
-    private static final String GROK_EXPRESSION = "%{COMBINEDAPACHELOG} pid:%{NUMBER}/%{NUMBER} uid:%{HOSTNAME} con:%{HOST}/%{POSINT} cbs:%{INT}/%{INT} ckr:%{INT} cst:%{NOTSPACE} rtm:%{NUMBER}/%{NUMBER:time_duration}";
+    private static final String GROK_EXPRESSION = "%{COMBINEDAPACHELOG} pid:%{NUMBER}/%{NUMBER} uid:%{NOTSPACE} con:%{IPORHOST}/%{POSINT} cbs:%{INT}/%{INT} ckr:%{INT} cst:%{NOTSPACE} rtm:%{NUMBER}/%{NUMBER:time_duration}";
 
     static {
         Locale.setDefault(Locale.ENGLISH);

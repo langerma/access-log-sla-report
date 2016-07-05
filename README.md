@@ -198,7 +198,8 @@ The performance varies depending on the log file format, your custom regular exp
 
 Below you find some ball park numbers
 
-| Configuration                     | Computer		| Throughput                 |
-|-----------------------------------|---------------|----------------------------|
-| haproxy-sit-geapi                 | iMac i7 2011  |  9.0000 lines / sec        |
-| combined-apache                   | iMac i7 2015  | 20.0000 lines / sec        |
+| Configuration                     | Environment		                                    | Throughput                 |
+|-----------------------------------|-------------------------------------------------------|----------------------------|
+| combined-apache                   | iMac i7 2015, uncompressed logfiles                   | 20.000 lines / sec         |
+| haproxy-sit-geapi                 | iMac i7 2011, uncompressed logfiles                   |  9.000 lines / sec         |
+| haproxy-sit-geapi                 | Log server, compressed logfiles, 7 million requests   |  7.500 lines / sec         |
