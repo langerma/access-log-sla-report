@@ -468,7 +468,8 @@ function CLI(defaultParser) {
 function AccessLogLineParser(name, grokExpression, nrOfRequiredMatches, logEntryDataFormat, resourcePathRegExpString, logLineIncludeFilters, logLineExcludeFilters, logEntrySuccessPredicates, toMillisDivisor) {
 
     this.name = name;
-    this.grok = Java.type('oi.thekraken.grok.api.Grok').create("./patterns/patterns", grokExpression);
+    this.grokPatternFile = java.lang.System.getProperty("user.dir", ".") + "/patterns/patterns";
+    this.grok = Java.type('oi.thekraken.grok.api.Grok').create(this.grokPatternFile, grokExpression);
     this.nrOfRequiredMatches = nrOfRequiredMatches;
     this.logEntryDateParser = new java.text.SimpleDateFormat(logEntryDataFormat, java.util.Locale.ENGLISH);
     this.resourcePathRegExp = java.util.regex.Pattern.compile(resourcePathRegExpString);

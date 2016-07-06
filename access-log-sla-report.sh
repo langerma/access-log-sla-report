@@ -27,4 +27,4 @@ for i in ${APP_HOME}/lib/* ; do
   fi
 done
 
-${JAVA_HOME}/bin/jrunscript -cp $LOCALCLASSPATH $APP_HOME/src/main/js/access-log-sla-report.js "$@"
+${JAVA_HOME}/bin/jrunscript -cp $LOCALCLASSPATH -Duser.dir=$APP_HOME $APP_HOME/src/main/js/access-log-sla-report.js "$@"
