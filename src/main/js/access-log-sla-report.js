@@ -329,7 +329,9 @@ function addToReportModel(logEntry) {
 
     var timestamp = logEntry.timestamp;
     var monitorName = createMonitorName(logEntry);
-    var responseCodeName = logEntry.getHttpResponseCodeName(logEntry.responseCode);
+    var reponseCode = logEntry.responseCode;
+    var responseCodeName = logEntry.getHttpResponseCodeName(reponseCode);
+    var responseCodeMessage = reponseCode + " " + responseCodeName;
     var timeTaken = logEntry.timeTakenMillis;
 
     if (logEntry.isSuccess) {
@@ -342,7 +344,7 @@ function addToReportModel(logEntry) {
             monitorName,
             timestamp,
             timeTaken,
-            responseCodeName,
+            responseCodeMessage,
             logEntry.getRawLine());
     }
 }
