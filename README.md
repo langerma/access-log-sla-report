@@ -123,6 +123,7 @@ which can be unpacked at the remote server
 
 The integration test also creates a "./target/access-log-sla-report.html"
 
+
 # 5. Understanding the HTML Report
 
 ![Figure-1 Access Log SLA Report](./src/site/images/access-log-sla-report.png "Access Log SLA Report")
@@ -162,9 +163,25 @@ The following tools are required to run the project
 
 * JDK 1.8
 
-# 8. Access Log Formats
 
-## 8.1 Common Apache Access Log Format
+# 8. Some Thoughts Along The Line
+
+## 8.1 Performance
+
+The performance varies depending on the log file format, your custom regular expressions and your CPU power. We use cron job to parse access logs having usually around 5 million lines per day.
+
+Below you find some ball park numbers
+
+| Configuration                     | Environment		                                    | Throughput                 |
+|-----------------------------------|-------------------------------------------------------|----------------------------|
+| combined-apache                   | iMac i7 2015, uncompressed logfiles                   | 20.000 lines / sec         |
+| haproxy-sit-geapi                 | iMac i7 2011, uncompressed logfiles                   |  9.000 lines / sec         |
+| haproxy-sit-geapi                 | Log server, compressed logfiles, 7 million requests   |  7.500 lines / sec         |
+
+
+# 9. Access Log Formats
+
+## 9.1 Common Apache Access Log Format
 
 ```
 %h              Remote hostname/IP [string]
@@ -176,7 +193,7 @@ The following tools are required to run the project
 %b              Response bytes excluding headers [string]
 ```
 
-## 8.2 Combinded Apache Access Log Format
+## 9.2 Combinded Apache Access Log Format
 
 ```
 %h              Remote hostname/IP [string]
@@ -189,17 +206,3 @@ The following tools are required to run the project
 %{Referer}i     Incoming Referer header [string]
 %{User-Agent}i  Incoming UA header [string]
 ```
-
-# 9. Some Thoughts Along The Line
-
-## 9.1 Performance
-
-The performance varies depending on the log file format, your custom regular expressions and your CPU power. We use cron job to parse access logs having usually around 5 million lines per day.
-
-Below you find some ball park numbers
-
-| Configuration                     | Environment		                                    | Throughput                 |
-|-----------------------------------|-------------------------------------------------------|----------------------------|
-| combined-apache                   | iMac i7 2015, uncompressed logfiles                   | 20.000 lines / sec         |
-| haproxy-sit-geapi                 | iMac i7 2011, uncompressed logfiles                   |  9.000 lines / sec         |
-| haproxy-sit-geapi                 | Log server, compressed logfiles, 7 million requests   |  7.500 lines / sec         |
