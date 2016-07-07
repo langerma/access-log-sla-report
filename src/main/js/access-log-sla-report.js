@@ -26,13 +26,10 @@ var JAMON_REPORT_MODEL = new org.apache.jmeter.extra.report.sla.JMeterReportMode
 
 // ===  Apache Common Log ====================================================
 
-var COMMON_APACHE_LOGENTRY_GROK_MATCHES_REQUIRED = 19;
-var COMMON_APACHE_LOGENTRY_GROK_EXPRESSION = "%{COMMONAPACHELOG}";
-
 var COMMON_APACHE_ACCESS_LOG_PARSER = new AccessLogLineParser(
     "common-apache",
-    COMMON_APACHE_LOGENTRY_GROK_EXPRESSION,
-    COMMON_APACHE_LOGENTRY_GROK_MATCHES_REQUIRED,
+    "%{COMMONAPACHELOG}",
+    19,
     "dd/MMM/yyyy:HH:mm:ss Z",
     "^([a-z]{1,15}+(\\.[a-z]{3,4}|\\d?))$",
     [],
@@ -43,13 +40,10 @@ var COMMON_APACHE_ACCESS_LOG_PARSER = new AccessLogLineParser(
 
 // ===  Apache Combined Log ==================================================
 
-var COMMON_APACHE_LOGENTRY_GROK_MATCHES_REQUIRED = 22;
-var COMMON_APACHE_LOGENTRY_GROK_EXPRESSION = "%{COMBINEDAPACHELOG}";
-
 var COMBINED_APACHE_ACCESS_LOG_PARSER = new AccessLogLineParser(
     "combined-apache",
-    COMMON_APACHE_LOGENTRY_GROK_EXPRESSION,
-    COMMON_APACHE_LOGENTRY_GROK_MATCHES_REQUIRED,
+    "%{COMBINEDAPACHELOG}",
+    22,
     "dd/MMM/yyyy:HH:mm:ss Z",
     "^([a-z]{1,15}+(\\.[a-z]{3,4}|\\d?))$",
     [],
@@ -335,7 +329,7 @@ function addToReportModel(logEntry) {
 
     var timestamp = logEntry.timestamp;
     var monitorName = createMonitorName(logEntry);
-    var responseCode = logEntry.responseCode;
+    var responseCodeName = logEntry.getHttpResponseCodeName(logEntry.responseCode);
     var timeTaken = logEntry.timeTakenMillis;
 
     if (logEntry.isSuccess) {
@@ -348,7 +342,7 @@ function addToReportModel(logEntry) {
             monitorName,
             timestamp,
             timeTaken,
-            responseCode,
+            responseCodeName,
             logEntry.getRawLine());
     }
 }
@@ -798,19 +792,6 @@ function LogEntry(logFile, lineNumber, line, ipAddress, timestamp, requestUrl, c
         buffer.append("timeTakenMillis=").append(this.timeTakenMillis.toString()).append("\n");
         buffer.append("logFile=").append(this.logFile).append("\n");
         buffer.append("lineNumber=").append(this.lineNumber.toString()).append("\n");
-        return buffer.toString();
-    };
-
-    this.toCsv = function () {
-        var sdf = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mmZ");
-        var buffer = new java.lang.StringBuilder();
-        buffer.append(sdf.format(this.timestamp)).append(";");
-        buffer.append(this.requestMethod).append(";");
-        buffer.append(this.collapsedUrl).append(";");
-        buffer.append(this.responseCode.toString()).append(";");
-        buffer.append(this.timeTakenMillis.toString()).append(";");
-        buffer.append(this.logFile.getAbsolutePath()).append(";");
-        buffer.append(this.lineNumber.toString());
         return buffer.toString();
     };
 
