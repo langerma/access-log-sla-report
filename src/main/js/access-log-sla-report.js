@@ -23,6 +23,7 @@
  */
 
 var JAMON_REPORT_MODEL = new org.apache.jmeter.extra.report.sla.JMeterReportModel();
+var LINE_MATCH_ALL_SEARCH_STRING = null;
 
 // ===  Apache Common Log ====================================================
 
@@ -52,7 +53,35 @@ var COMBINED_APACHE_ACCESS_LOG_PARSER = new AccessLogLineParser(
     1
 );
 
-// === SIT Apache Tomcat ====================================================
+// ===  HAProxy Log ==========================================================
+
+var HAPROXY_ACCESS_LOG_PARSER = new AccessLogLineParser(
+    "haproxy",
+    "%{HAPROXYHTTP}",
+    52,
+    "dd/MMM/yyyy:HH:mm:ss.SSS",
+    "^([a-z]{1,15}+(\\.[a-z]{3,4}|\\d?))$",
+    [],
+    [],
+    [],
+    1
+);
+
+// === Custom ================================================================
+
+var CUSTOM_ACCESS_LOG_PARSER = new AccessLogLineParser(
+    "custom",
+    HTTPD_SIT_LOGENTRY_GROK_EXPRESSION,
+    16,
+    "dd/MMM/yyyy:HH:mm:ss Z",
+    "^([a-z]{1,15}+(\\.[a-z]{3,4}|\\d?))$",
+    [],
+    [],
+    [],
+    1000
+);
+
+// === SIT Apache Tomcat =====================================================
 
 var CATALINA_SIT_LOGENTRY_GROK_MATCHES_REQUIRED = 28;
 var CATALINA_SIT_LOGENTRY_GROK_EXPRESSION = "%{COMBINEDAPACHELOG} tid:%{HOSTNAME} uid:%{QS} con:%{IPORHOST}/%{POSINT} rtm:%{NUMBER}/%{INT:time_duration}";
@@ -78,10 +107,12 @@ var CATALINA_SIT_GEORGE_API_ACCESS_LOG_PARSER = new AccessLogLineParser(
     [],
     ["georgeclient-advisor", "X-ADVISOR-ID:"],
     [
-        new LogEntrySuccessPredicate("GET", "/my/images/*", 404),
-        new LogEntrySuccessPredicate("*", "/my/accounts/*/images/image", 404),
-        new LogEntrySuccessPredicate("GET", "/my/transactions/*/attachment/thumbnail", 404),
-        new LogEntrySuccessPredicate("GET", "/my/orders", 404)
+        new LogEntrySuccessPredicate("GET", "/my/accounts/*/invoices", 403, "George Go 1.5.2"), // see https://issues.beeone.at/browse/GB-1104
+        new LogEntrySuccessPredicate("GET", "/my/images/*", 404, LINE_MATCH_ALL_SEARCH_STRING),
+        new LogEntrySuccessPredicate("GET", "/my/accounts/images/image", 404, "X-ORIG-CLIENT-ID: transactionapp"), // see https://issues.beeone.at/browse/GB-1054
+        new LogEntrySuccessPredicate("*", "/my/accounts/*/images/image", 404, LINE_MATCH_ALL_SEARCH_STRING),
+        new LogEntrySuccessPredicate("GET", "/my/transactions/*/attachment/thumbnail", 404, LINE_MATCH_ALL_SEARCH_STRING),
+        new LogEntrySuccessPredicate("GET", "/my/orders", 404, LINE_MATCH_ALL_SEARCH_STRING)
     ],
     1
 );
@@ -124,27 +155,17 @@ var HTTPD_SIT_GEORGE_API_ACCESS_LOG_PARSER = new AccessLogLineParser(
     [],
     ["georgeclient-advisor", "X-ADVISOR-ID:"],
     [
-        new LogEntrySuccessPredicate("GET", "/my/images/*", 404),
-        new LogEntrySuccessPredicate("*", "/my/accounts/*/images/image", 404),
-        new LogEntrySuccessPredicate("GET", "/my/transactions/*/attachment/thumbnail", 404),
-        new LogEntrySuccessPredicate("GET", "/my/orders", 404)
+        new LogEntrySuccessPredicate("GET", "/my/accounts/*/invoices", 403, "George Go 1.5.2"), // see https://issues.beeone.at/browse/GB-1104
+        new LogEntrySuccessPredicate("GET", "/my/images/*", 404, LINE_MATCH_ALL_SEARCH_STRING),
+        new LogEntrySuccessPredicate("GET", "/my/accounts/images/image", 404, "X-ORIG-CLIENT-ID: transactionapp"), // see https://issues.beeone.at/browse/GB-1054
+        new LogEntrySuccessPredicate("*", "/my/accounts/*/images/image", 404, LINE_MATCH_ALL_SEARCH_STRING),
+        new LogEntrySuccessPredicate("GET", "/my/transactions/*/attachment/thumbnail", 404, LINE_MATCH_ALL_SEARCH_STRING),
+        new LogEntrySuccessPredicate("GET", "/my/orders", 404, LINE_MATCH_ALL_SEARCH_STRING)
     ],
     1000
 );
 
-// === SIT HAProxy===========================================================
-
-var HAPROXY_ACCESS_LOG_PARSER = new AccessLogLineParser(
-    "haproxy",
-    "%{HAPROXYHTTP}",
-    52,
-    "dd/MMM/yyyy:HH:mm:ss.SSS",
-    "^([a-z]{1,15}+(\\.[a-z]{3,4}|\\d?))$",
-    [],
-    [],
-    [],
-    1
-);
+// === SIT HAProxy ===========================================================
 
 var HAPROXY_SIT_GEORGE_API_ACCESS_LOG_PARSER = new AccessLogLineParser(
     "haproxy-sit-geapi",
@@ -155,27 +176,14 @@ var HAPROXY_SIT_GEORGE_API_ACCESS_LOG_PARSER = new AccessLogLineParser(
     ["/api/my/"],
     ["georgeclient-advisor", "X-ADVISOR-ID:"],
     [
-        new LogEntrySuccessPredicate("GET", "/my/images/*", 404),
-        new LogEntrySuccessPredicate("*", "/my/accounts/*/images/image", 404),
-        new LogEntrySuccessPredicate("GET", "/my/transactions/*/attachment/thumbnail", 404),
-        new LogEntrySuccessPredicate("GET", "/my/orders", 404)
+        new LogEntrySuccessPredicate("GET", "/my/accounts/*/invoices", 403, "George Go 1.5.2"), // see https://issues.beeone.at/browse/GB-1104
+        new LogEntrySuccessPredicate("GET", "/my/images/*", 404, LINE_MATCH_ALL_SEARCH_STRING),
+        new LogEntrySuccessPredicate("GET", "/my/accounts/images/image", 404, "X-ORIG-CLIENT-ID: transactionapp"), // see https://issues.beeone.at/browse/GB-1054
+        new LogEntrySuccessPredicate("*", "/my/accounts/*/images/image", 404, LINE_MATCH_ALL_SEARCH_STRING),
+        new LogEntrySuccessPredicate("GET", "/my/transactions/*/attachment/thumbnail", 404, LINE_MATCH_ALL_SEARCH_STRING),
+        new LogEntrySuccessPredicate("GET", "/my/orders", 404, LINE_MATCH_ALL_SEARCH_STRING)
     ],
     1
-);
-
-
-// === Custom ===============================================================
-
-var CUSTOM_ACCESS_LOG_PARSER = new AccessLogLineParser(
-    "custom",
-    HTTPD_SIT_LOGENTRY_GROK_EXPRESSION,
-    16,
-    "dd/MMM/yyyy:HH:mm:ss Z",
-    "^([a-z]{1,15}+(\\.[a-z]{3,4}|\\d?))$",
-    [],
-    [],
-    [],
-    1000
 );
 
 var PARSER_MAP = {};
@@ -533,10 +541,6 @@ function AccessLogLineParser(name, grokExpression, nrOfRequiredMatches, logEntry
      */
     this.createCollapsedUrl = function (requestURL) {
 
-        // restapi/api/my/configuration ==> restapi/api/my/configuration
-        // restapi/api/my/accounts/XXXXXXXXX/stats ==> restapi/api/my/accounts/*/stats
-        // restapi/api/my/accounts/YYYYYYYYY/images/image ==> restapi/api/my/accounts/*/images/image
-
         if (requestURL.equals("/")) {
             return requestURL;
         }
@@ -628,7 +632,7 @@ function AccessLogLineParser(name, grokExpression, nrOfRequiredMatches, logEntry
             if (this.hasLogEntrySuccessPredicates()) {
                 for (i = 0; i < logEntrySuccessPredicates.length && !isSuccess; i++) {
                     logEntrySuccessPredicate = logEntrySuccessPredicates[i];
-                    isSuccess = isSuccess || logEntrySuccessPredicate.isSuccess(requestHttpMethod, collapsedUrl, responseCode);
+                    isSuccess = isSuccess || logEntrySuccessPredicate.isSuccess(requestHttpMethod, collapsedUrl, responseCode, line);
                 }
             }
             else {
@@ -668,7 +672,7 @@ function AccessLogLineParser(name, grokExpression, nrOfRequiredMatches, logEntry
 // LogEntrySuccessPredicate
 // ==========================================================================
 
-function LogEntrySuccessPredicate(requestMethod, collapsedUrlPart, responseCode) {
+function LogEntrySuccessPredicate(requestMethod, collapsedUrlPart, responseCode, subString) {
 
     /** the HTTP requestMethod, e.g. "PUT" */
     this.requestMethod = requestMethod;
@@ -679,17 +683,31 @@ function LogEntrySuccessPredicate(requestMethod, collapsedUrlPart, responseCode)
     /** the HTTP response code to be considered successful */
     this.responseCode = responseCode;
 
-    this.isSuccess = function (requestMethod, collapsedUrl, responseCode) {
+    /** Sub string which shall be found in the access log line */
+    this.subString = subString;
+
+    this.isSuccess = function (requestMethod, collapsedUrl, responseCode, line) {
 
         if (responseCode >= 200 && responseCode < 400) {
             return true;
         }
 
-        if (collapsedUrl.contains(collapsedUrlPart) && this.responseCode == responseCode) {
-            return this.requestMethod == "*" || this.requestMethod == requestMethod
+        if (collapsedUrl.contains(collapsedUrlPart)
+            && this.responseCode == responseCode
+            && this.hasMatchingRequestMethod(requestMethod)
+            && this.subStringMatchesLine(line)) {
+            return true;
+        } else {
+            return false;
         }
+    };
 
-        return false;
+    this.subStringMatchesLine = function (line) {
+        return (!!this.subString ? line.contains(this.subString) : true);
+    };
+
+    this.hasMatchingRequestMethod = function (requestMethod) {
+        return this.requestMethod == "*" || this.requestMethod == requestMethod
     };
 
     this.toString = function () {
@@ -874,5 +892,3 @@ function LogEntry(logFile, lineNumber, line, ipAddress, timestamp, requestUrl, c
 }
 
 main(arguments);
-
-
