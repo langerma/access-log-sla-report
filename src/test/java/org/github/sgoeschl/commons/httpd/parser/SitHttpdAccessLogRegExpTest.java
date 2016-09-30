@@ -18,17 +18,25 @@ package org.github.sgoeschl.commons.httpd.parser;
 
 import org.junit.Test;
 
+import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-public class HttpdAccessLogRegExpTest {
+/**
+ * Tests the attribute extractions of the HTTPDS access logs using SIT log format.
+ */
+public class SitHttpdAccessLogRegExpTest {
 
-    public static final int REGEXP_MATCHES_REQUIRED = 16;
-    public static final String LOG_ENTRY_PATTERN_STRING = "^(\\S+) (\\S+) (\\S+) \\[([\\w:/]+\\s[+\\-]\\d{4})\\] \"(.+?)\" (\\d{3}) (\\S+) \"([^\"]*)\" \"([^\"]+)\" pid:(\\S+) uid:(\\S+) con:(\\S+) cbs:(\\S+) ckr:(\\S+) cst:(\\S+) rtm:\\d+/(?<duration>\\S+) .*";
-    public static final Pattern LOG_ENTRY_REGEXP = Pattern.compile(LOG_ENTRY_PATTERN_STRING);
+    private static final int REGEXP_MATCHES_REQUIRED = 16;
+    private static final String LOG_ENTRY_PATTERN_STRING = "^(\\S+) (\\S+) (\\S+) \\[([\\w:/]+\\s[+\\-]\\d{4})\\] \"(.+?)\" (\\d{3}) (\\S+) \"([^\"]*)\" \"([^\"]+)\" pid:(\\S+) uid:(\\S+) con:(\\S+) cbs:(\\S+) ckr:(\\S+) cst:(\\S+) rtm:\\d+/(?<duration>\\S+) .*";
+    private static final Pattern LOG_ENTRY_REGEXP = Pattern.compile(LOG_ENTRY_PATTERN_STRING);
+
+    static {
+        Locale.setDefault(Locale.ENGLISH);
+    }
 
     @Test
     public void shouldParseAllPartsOfAccessLogLine() {

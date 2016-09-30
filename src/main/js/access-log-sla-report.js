@@ -16,21 +16,80 @@
  */
 
 /*
- * This JavaScript parses a sIT Apache & Cataline access logs and uses JAMon
- * to generate a response time report.
+ * This JavaScript parses HTTPD & Tomcat access logs and uses JAMon
+ * to generate a report being suitable for SLAs.
  *
  * @author <a href="mailto:siegfried.goeschl@gmail.com">Siegfried Goeschl</a>
  */
 
 var JAMON_REPORT_MODEL = new org.apache.jmeter.extra.report.sla.JMeterReportModel();
+var LINE_MATCH_ALL_SEARCH_STRING = null;
 
-var CATALINA_SIT_LOGENTRY_REGEXP_STRING = "^(\\S+) (\\S+) (\\S+) \\[([\\w:/]+\\s[+\\-]\\d{4})\\] \"(.+?)\" (\\d{3}) (\\S+) \"([^\"]*)\" \"([^\"]+)\" tid:(\\S+) uid:\"(\\S+)\" con:(\\S+) rtm:\\d+\\.\\d*/(?<duration>\\d+) hct:\"(\\S+)\" hac:\"(.*)\" sid:\"(.*)\" x-user-id:\"(.*)\" x-client-id:\"(.*)\" x-client-info:\"(.*)\"";
-var HTTPD_SIT_LOGENTRY_REGEXP_STRING = "^(\\S+) (\\S+) (\\S+) \\[([\\w:/]+\\s[+\\-]\\d{4})\\] \"(.+?)\" (\\d{3}) (\\S+) \"([^\"]*)\" \"([^\"]+)\" pid:(\\S+) uid:(\\S+) con:(\\S+) cbs:(\\S+) ckr:(\\S+) cst:(\\S+) rtm:\\d+/(?<duration>\\S+) .*";
+// ===  Apache Common Log ====================================================
+
+var COMMON_APACHE_ACCESS_LOG_PARSER = new AccessLogLineParser(
+    "common-apache",
+    "%{COMMONAPACHELOG}",
+    19,
+    "dd/MMM/yyyy:HH:mm:ss Z",
+    "^([a-z]{1,15}+(\\.[a-z]{3,4}|\\d?))$",
+    [],
+    [],
+    [],
+    1
+);
+
+// ===  Apache Combined Log ==================================================
+
+var COMBINED_APACHE_ACCESS_LOG_PARSER = new AccessLogLineParser(
+    "combined-apache",
+    "%{COMBINEDAPACHELOG}",
+    22,
+    "dd/MMM/yyyy:HH:mm:ss Z",
+    "^([a-z]{1,15}+(\\.[a-z]{3,4}|\\d?))$",
+    [],
+    [],
+    [],
+    1
+);
+
+// ===  HAProxy Log ==========================================================
+
+var HAPROXY_ACCESS_LOG_PARSER = new AccessLogLineParser(
+    "haproxy",
+    "%{HAPROXYHTTP}",
+    52,
+    "dd/MMM/yyyy:HH:mm:ss.SSS",
+    "^([a-z]{1,15}+(\\.[a-z]{3,4}|\\d?))$",
+    [],
+    [],
+    [],
+    1
+);
+
+// === Custom ================================================================
+
+var CUSTOM_ACCESS_LOG_PARSER = new AccessLogLineParser(
+    "custom",
+    HTTPD_SIT_LOGENTRY_GROK_EXPRESSION,
+    16,
+    "dd/MMM/yyyy:HH:mm:ss Z",
+    "^([a-z]{1,15}+(\\.[a-z]{3,4}|\\d?))$",
+    [],
+    [],
+    [],
+    1000
+);
+
+// === SIT Apache Tomcat =====================================================
+
+var CATALINA_SIT_LOGENTRY_GROK_MATCHES_REQUIRED = 28;
+var CATALINA_SIT_LOGENTRY_GROK_EXPRESSION = "%{COMBINEDAPACHELOG} tid:%{HOSTNAME} uid:%{QS} con:%{IPORHOST}/%{POSINT} rtm:%{NUMBER}/%{INT:time_duration}";
 
 var CATALINA_SIT_ACCESS_LOG_PARSER = new AccessLogLineParser(
     "catalina-sit",
-    CATALINA_SIT_LOGENTRY_REGEXP_STRING,
-    19,
+    CATALINA_SIT_LOGENTRY_GROK_EXPRESSION,
+    CATALINA_SIT_LOGENTRY_GROK_MATCHES_REQUIRED,
     "dd/MMM/yyyy:HH:mm:ss Z",
     "^([a-z]{1,15}+(\\.[a-z]{3,4}|\\d?))$",
     [],
@@ -41,25 +100,27 @@ var CATALINA_SIT_ACCESS_LOG_PARSER = new AccessLogLineParser(
 
 var CATALINA_SIT_GEORGE_API_ACCESS_LOG_PARSER = new AccessLogLineParser(
     "catalina-sit-geapi",
-    CATALINA_SIT_LOGENTRY_REGEXP_STRING,
-    19,
+    CATALINA_SIT_LOGENTRY_GROK_EXPRESSION,
+    CATALINA_SIT_LOGENTRY_GROK_MATCHES_REQUIRED,
     "dd/MMM/yyyy:HH:mm:ss Z",
     "^([a-z]{1,15}+(\\.[a-z]{3,4}|\\d?))$",
     [],
     ["georgeclient-advisor", "X-ADVISOR-ID:"],
     [
-        new LogEntrySuccessPredicate("GET", "/my/images/*", 404),
-        new LogEntrySuccessPredicate("*", "/my/accounts/*/images/image", 404),
-        new LogEntrySuccessPredicate("GET", "/my/transactions/*/attachment/thumbnail", 404),
-        new LogEntrySuccessPredicate("GET", "/my/orders", 404)
+        new LogEntrySuccessPredicate("GET", "/my/accounts/*/invoices", 403, "George Go 1.5.2"), // see https://issues.beeone.at/browse/GB-1104
+        new LogEntrySuccessPredicate("GET", "/my/images/*", 404, LINE_MATCH_ALL_SEARCH_STRING),
+        new LogEntrySuccessPredicate("GET", "/my/accounts/images/image", 404, "X-ORIG-CLIENT-ID: transactionapp"), // see https://issues.beeone.at/browse/GB-1054
+        new LogEntrySuccessPredicate("*", "/my/accounts/*/images/image", 404, LINE_MATCH_ALL_SEARCH_STRING),
+        new LogEntrySuccessPredicate("GET", "/my/transactions/*/attachment/thumbnail", 404, LINE_MATCH_ALL_SEARCH_STRING),
+        new LogEntrySuccessPredicate("GET", "/my/orders", 404, LINE_MATCH_ALL_SEARCH_STRING)
     ],
     1
 );
 
 var CATALINA_SIT_GEORGE_IMPORTER_ACCESS_LOG_PARSER = new AccessLogLineParser(
     "catalina-sit-geimp",
-    CATALINA_SIT_LOGENTRY_REGEXP_STRING,
-    19,
+    CATALINA_SIT_LOGENTRY_GROK_EXPRESSION,
+    CATALINA_SIT_LOGENTRY_GROK_MATCHES_REQUIRED,
     "dd/MMM/yyyy:HH:mm:ss Z",
     "^([a-z\-])+$",
     [],
@@ -68,10 +129,15 @@ var CATALINA_SIT_GEORGE_IMPORTER_ACCESS_LOG_PARSER = new AccessLogLineParser(
     1
 );
 
+// === SIT Apache HTTPD ======================================================
+
+var HTTPD_SIT_LOGENTRY_GROK_MATCHES_REQUIRED = 27;
+var HTTPD_SIT_LOGENTRY_GROK_EXPRESSION = "%{COMBINEDAPACHELOG} pid:%{NUMBER}/%{NUMBER} uid:%{NOTSPACE} con:%{IPORHOST}/%{POSINT} cbs:%{INT}/%{INT} ckr:%{INT} cst:%{NOTSPACE} rtm:%{NUMBER}/%{NUMBER:time_duration}";
+
 var HTTPD_SIT_ACCESS_LOG_PARSER = new AccessLogLineParser(
     "httpd-sit",
-    HTTPD_SIT_LOGENTRY_REGEXP_STRING,
-    16,
+    HTTPD_SIT_LOGENTRY_GROK_EXPRESSION,
+    HTTPD_SIT_LOGENTRY_GROK_MATCHES_REQUIRED,
     "dd/MMM/yyyy:HH:mm:ss Z",
     "^([a-z]{1,15}+(\\.[a-z]{3,4}|\\d?))$",
     [],
@@ -82,39 +148,54 @@ var HTTPD_SIT_ACCESS_LOG_PARSER = new AccessLogLineParser(
 
 var HTTPD_SIT_GEORGE_API_ACCESS_LOG_PARSER = new AccessLogLineParser(
     "httpd-sit-geapi",
-    HTTPD_SIT_LOGENTRY_REGEXP_STRING,
-    16,
+    HTTPD_SIT_LOGENTRY_GROK_EXPRESSION,
+    HTTPD_SIT_LOGENTRY_GROK_MATCHES_REQUIRED,
     "dd/MMM/yyyy:HH:mm:ss Z",
     "^([a-z]{1,15}+(\\.[a-z]{3,4}|\\d?))$",
     [],
     ["georgeclient-advisor", "X-ADVISOR-ID:"],
     [
-        new LogEntrySuccessPredicate("GET", "/my/images/*", 404),
-        new LogEntrySuccessPredicate("*", "/my/accounts/*/images/image", 404),
-        new LogEntrySuccessPredicate("GET", "/my/transactions/*/attachment/thumbnail", 404),
-        new LogEntrySuccessPredicate("GET", "/my/orders", 404)
+        new LogEntrySuccessPredicate("GET", "/my/accounts/*/invoices", 403, "George Go 1.5.2"), // see https://issues.beeone.at/browse/GB-1104
+        new LogEntrySuccessPredicate("GET", "/my/images/*", 404, LINE_MATCH_ALL_SEARCH_STRING),
+        new LogEntrySuccessPredicate("GET", "/my/accounts/images/image", 404, "X-ORIG-CLIENT-ID: transactionapp"), // see https://issues.beeone.at/browse/GB-1054
+        new LogEntrySuccessPredicate("*", "/my/accounts/*/images/image", 404, LINE_MATCH_ALL_SEARCH_STRING),
+        new LogEntrySuccessPredicate("GET", "/my/transactions/*/attachment/thumbnail", 404, LINE_MATCH_ALL_SEARCH_STRING),
+        new LogEntrySuccessPredicate("GET", "/my/orders", 404, LINE_MATCH_ALL_SEARCH_STRING)
     ],
     1000
 );
 
-var CUSTOM_ACCESS_LOG_PARSER = new AccessLogLineParser(
-    "custom",
-    HTTPD_SIT_LOGENTRY_REGEXP_STRING,
-    16,
-    "dd/MMM/yyyy:HH:mm:ss Z",
+// === SIT HAProxy ===========================================================
+
+var HAPROXY_SIT_GEORGE_API_ACCESS_LOG_PARSER = new AccessLogLineParser(
+    "haproxy-sit-geapi",
+    "%{HAPROXYHTTP}",
+    52,
+    "dd/MMM/yyyy:HH:mm:ss.SSS",
     "^([a-z]{1,15}+(\\.[a-z]{3,4}|\\d?))$",
-    [],
-    [],
-    [],
-    1000
+    ["/api/my/"],
+    ["georgeclient-advisor", "X-ADVISOR-ID:"],
+    [
+        new LogEntrySuccessPredicate("GET", "/my/accounts/*/invoices", 403, "George Go 1.5.2"), // see https://issues.beeone.at/browse/GB-1104
+        new LogEntrySuccessPredicate("GET", "/my/images/*", 404, LINE_MATCH_ALL_SEARCH_STRING),
+        new LogEntrySuccessPredicate("GET", "/my/accounts/images/image", 404, "X-ORIG-CLIENT-ID: transactionapp"), // see https://issues.beeone.at/browse/GB-1054
+        new LogEntrySuccessPredicate("*", "/my/accounts/*/images/image", 404, LINE_MATCH_ALL_SEARCH_STRING),
+        new LogEntrySuccessPredicate("GET", "/my/transactions/*/attachment/thumbnail", 404, LINE_MATCH_ALL_SEARCH_STRING),
+        new LogEntrySuccessPredicate("GET", "/my/orders", 404, LINE_MATCH_ALL_SEARCH_STRING)
+    ],
+    1
 );
 
 var PARSER_MAP = {};
+PARSER_MAP[COMMON_APACHE_ACCESS_LOG_PARSER.name] = COMMON_APACHE_ACCESS_LOG_PARSER;
+PARSER_MAP[COMBINED_APACHE_ACCESS_LOG_PARSER.name] = COMBINED_APACHE_ACCESS_LOG_PARSER;
 PARSER_MAP[CATALINA_SIT_ACCESS_LOG_PARSER.name] = CATALINA_SIT_ACCESS_LOG_PARSER;
-PARSER_MAP[HTTPD_SIT_ACCESS_LOG_PARSER.name] = HTTPD_SIT_ACCESS_LOG_PARSER;
 PARSER_MAP[CATALINA_SIT_GEORGE_API_ACCESS_LOG_PARSER.name] = CATALINA_SIT_GEORGE_API_ACCESS_LOG_PARSER;
 PARSER_MAP[CATALINA_SIT_GEORGE_IMPORTER_ACCESS_LOG_PARSER.name] = CATALINA_SIT_GEORGE_IMPORTER_ACCESS_LOG_PARSER;
+PARSER_MAP[HTTPD_SIT_ACCESS_LOG_PARSER.name] = HTTPD_SIT_ACCESS_LOG_PARSER;
 PARSER_MAP[HTTPD_SIT_GEORGE_API_ACCESS_LOG_PARSER.name] = HTTPD_SIT_GEORGE_API_ACCESS_LOG_PARSER;
+PARSER_MAP[HAPROXY_ACCESS_LOG_PARSER.name] = HAPROXY_ACCESS_LOG_PARSER;
+PARSER_MAP[HAPROXY_SIT_GEORGE_API_ACCESS_LOG_PARSER.name] = HAPROXY_SIT_GEORGE_API_ACCESS_LOG_PARSER;
 PARSER_MAP[CUSTOM_ACCESS_LOG_PARSER.name] = CUSTOM_ACCESS_LOG_PARSER;
 
 function main(arguments) {
@@ -129,7 +210,7 @@ function main(arguments) {
     var accessLogLineParser = PARSER_MAP[accessLogLineParserName];
 
     if (accessLogLineParser == null) {
-        println("Unable to find the following parser configuration: " + accessLogLineParserName)
+        println("Unable to find the following parser configuration: " + accessLogLineParserName);
         return 1;
     }
 
@@ -179,8 +260,7 @@ function createReader(logFile) {
         var bufferedInputStream = new java.io.BufferedInputStream(fileInputStream);
         var compressedInputStream = new org.apache.commons.compress.compressors.CompressorStreamFactory().createCompressorInputStream(bufferedInputStream);
         var inputStreamReader = new java.io.InputStreamReader(compressedInputStream);
-        var bufferedReader = new java.io.BufferedReader(inputStreamReader);
-        return bufferedReader;
+        return new java.io.BufferedReader(inputStreamReader);
     }
     else {
         return new java.io.BufferedReader(new java.io.FileReader(logFile));
@@ -257,7 +337,9 @@ function addToReportModel(logEntry) {
 
     var timestamp = logEntry.timestamp;
     var monitorName = createMonitorName(logEntry);
-    var responseCode = logEntry.responseCode;
+    var reponseCode = logEntry.responseCode;
+    var responseCodeName = logEntry.getHttpResponseCodeName(reponseCode);
+    var responseCodeMessage = reponseCode + " " + responseCodeName;
     var timeTaken = logEntry.timeTakenMillis;
 
     if (logEntry.isSuccess) {
@@ -270,7 +352,7 @@ function addToReportModel(logEntry) {
             monitorName,
             timestamp,
             timeTaken,
-            responseCode,
+            responseCodeMessage,
             logEntry.getRawLine());
     }
 }
@@ -378,23 +460,22 @@ function CLI(defaultParser) {
  * line by line.
  *
  * @param name Name of the instance
- * @param logEntryRegExpString RegExp to split the access log line into individual parts
- * @param logEntryNrOfMatches Number of matches to consider the regexp valid
- * @param logEntryDataFormat Date foramt to parse the timestamp
+ * @param grokExpression Grok expression to split the access log line into individual parts
+ * @param nrOfRequiredMatches Number of matches to consider the Grok expression valid
+ * @param logEntryDataFormat Date format to parse the timestamp
  * @param resourcePathRegExpString RegExp to detect a resource path part in an URL
  * @param logLineIncludeFilters Simple string filter applied to an un-parsed log line
  * @param logLineExcludeFilters Simple string filter applied to an un-parsed log line
  * @param logEntrySuccessPredicates List of predicates to consider non-2XX result codes as good
- * @param toMillisDivisor the multipler to convert the response time to milli seconds
+ * @param toMillisDivisor the multiplier to convert the response time to milli seconds
  */
-function AccessLogLineParser(name, logEntryRegExpString, logEntryNrOfMatches, logEntryDataFormat, resourcePathRegExpString, logLineIncludeFilters, logLineExcludeFilters, logEntrySuccessPredicates, toMillisDivisor) {
+function AccessLogLineParser(name, grokExpression, nrOfRequiredMatches, logEntryDataFormat, resourcePathRegExpString, logLineIncludeFilters, logLineExcludeFilters, logEntrySuccessPredicates, toMillisDivisor) {
 
     this.name = name;
-    this.logEntryRegExpString = logEntryRegExpString;
-    this.logEntryRegExp = java.util.regex.Pattern.compile(logEntryRegExpString);
-    this.logEntryNrOfMatches = logEntryNrOfMatches;
+    this.grokPatternFile = java.lang.System.getProperty("user.dir", ".") + "/patterns/patterns";
+    this.grok = Java.type('oi.thekraken.grok.api.Grok').create(this.grokPatternFile, grokExpression);
+    this.nrOfRequiredMatches = nrOfRequiredMatches;
     this.logEntryDateParser = new java.text.SimpleDateFormat(logEntryDataFormat, java.util.Locale.ENGLISH);
-    this.resourcePathRegExpString = resourcePathRegExpString;
     this.resourcePathRegExp = java.util.regex.Pattern.compile(resourcePathRegExpString);
     this.logLineIncludeFilters = logLineIncludeFilters;
     this.logLineExcludeFilters = logLineExcludeFilters;
@@ -405,7 +486,7 @@ function AccessLogLineParser(name, logEntryRegExpString, logEntryNrOfMatches, lo
      * Cleanup stuff which would break the regexp later on.
      */
     this.preProcessLogLine = function (logLine) {
-        return logLine.replace("\\\"", "");
+        return logLine;
     };
 
     /**
@@ -419,9 +500,10 @@ function AccessLogLineParser(name, logEntryRegExpString, logEntryNrOfMatches, lo
             for (i = 0; i < this.logLineIncludeFilters.length; i++) {
                 var logLineIncludeFilter = this.logLineIncludeFilters[i];
                 if (logLine.contains(logLineIncludeFilter)) {
-                    return false;
+                    return true;
                 }
             }
+
             return false;
         }
 
@@ -429,7 +511,7 @@ function AccessLogLineParser(name, logEntryRegExpString, logEntryNrOfMatches, lo
             for (i = 0; i < this.logLineExcludeFilters.length; i++) {
                 var logLineExcludeFilter = this.logLineExcludeFilters[i];
                 if (logLine.contains(logLineExcludeFilter)) {
-                    return false;
+                    return false
                 }
             }
         }
@@ -459,9 +541,9 @@ function AccessLogLineParser(name, logEntryRegExpString, logEntryNrOfMatches, lo
      */
     this.createCollapsedUrl = function (requestURL) {
 
-        // restapi/api/my/configuration ==> restapi/api/my/configuration
-        // restapi/api/my/accounts/XXXXXXXXX/stats ==> restapi/api/my/accounts/*/stats
-        // restapi/api/my/accounts/YYYYYYYYY/images/image ==> restapi/api/my/accounts/*/images/image
+        if (requestURL.equals("/")) {
+            return requestURL;
+        }
 
         var parts = requestURL.split("/");
         var result = new java.lang.StringBuffer();
@@ -483,7 +565,7 @@ function AccessLogLineParser(name, logEntryRegExpString, logEntryNrOfMatches, lo
 
     this.hasLogEntrySuccessPredicates = function () {
         return this.logEntrySuccessPredicates != null && this.logEntrySuccessPredicates.length > 0;
-    }
+    };
 
     /**
      * Parse a single line of the HTTPD access log and add it to the report model.
@@ -491,55 +573,51 @@ function AccessLogLineParser(name, logEntryRegExpString, logEntryNrOfMatches, lo
      * @param logFile the currently processed log file
      * @param lineNumber the currently processing line number
      * @param line current line of the logfile
-     * @return null if the line was not parsable or the processes line
+     * @return null if the line was not parsed
      */
     this.parseLine = function (logFile, lineNumber, line) {
 
         try {
 
-            // cleanup stuff which would break regexp later on
+            // cleanup stuff which would break Grok later on
 
             preProccessedLine = this.preProcessLogLine(line);
 
-            // split the line of the access log into tokens using a regexp
+            // split the line of the access log into tokens
 
-            var matcher = this.logEntryRegExp.matcher(preProccessedLine);
+            var matcher = this.grok.match(preProccessedLine);
+            matcher.captures();
+            var map = matcher.toMap();
 
-            // check that the complete regexp matches
+            // check that the complete Grok expression matches
 
-            if (!matcher.matches()) {
-                println("[ERROR] RegExp did not match : " + preProccessedLine);
+            if (map.isEmpty()) {
+                println("[ERROR] Grok expression did not match : " + preProccessedLine);
                 return null;
             }
 
-            if (this.logEntryNrOfMatches != matcher.groupCount()) {
-                println("[ERROR] RegExp partly matched : groupCount=" + matcher.groupCount());
+            if (this.nrOfRequiredMatches != map.size()) {
+                println("[ERROR] Grok expression partly matched : " + map.size());
                 return null;
             }
 
-            // access the fields from a combined log format
+            // access the attributes
 
-            var ipAddress = matcher.group(1);
-            var dateString = matcher.group(4);
-            var requestLine = matcher.group(5);
-            var responseCode = parseInt(matcher.group(6));
-            var bytesSent = parseInt(matcher.group(7));
-            var referer = matcher.group(8);
-            var userAgent = matcher.group(9);
+            var ipAddress = map.get("client_ip");
+            var dateString = map.get("timestamp");
+            var requestHttpMethod = map.get("http_verb");
+            var request = map.get("http_request");
+            var responseCode = map.get("http_status_code");
+            var bytesSent = map.get("bytes_read");
+            var referrer = map.get("referrer");
+            var userAgent = map.get("agent");
+            var duration = map.get("time_duration");
 
-            // pick up other data using named mathcing groups
-            var duration = matcher.group("duration");
+            // split the "request" into its into URL and parameters
 
-            // split something like "GET /iad/kaufen-und-verkaufen/foto-tv-video-audio/lautsprecher-boxen-verstaerker?page=27 HTTP/1.1"
-            // into its individual components
-
-            var requestLineParts = requestLine.split(" ");
-            var requestHttpMethod = requestLineParts[0];
-            var requestURLLine = requestLineParts[1];
-            var questionMarkIndex = requestURLLine.indexOf('?');
-            var requestUrl = ( questionMarkIndex > 0 ? requestURLLine.substring(0, questionMarkIndex) : requestURLLine);
-            var requestParams = ( questionMarkIndex > 0 ? requestURLLine.substring(questionMarkIndex + 1) : "");
-            var requestHttpProtocol = requestLineParts[2];
+            var questionMarkIndex = request.indexOf('?');
+            var requestUrl = ( questionMarkIndex > 0 ? request.substring(0, questionMarkIndex) : request);
+            var requestParams = ( questionMarkIndex > 0 ? request.substring(questionMarkIndex + 1) : "");
 
             // convert raw parameters
 
@@ -554,7 +632,7 @@ function AccessLogLineParser(name, logEntryRegExpString, logEntryNrOfMatches, lo
             if (this.hasLogEntrySuccessPredicates()) {
                 for (i = 0; i < logEntrySuccessPredicates.length && !isSuccess; i++) {
                     logEntrySuccessPredicate = logEntrySuccessPredicates[i];
-                    isSuccess = isSuccess || logEntrySuccessPredicate.isSuccess(requestHttpMethod, collapsedUrl, responseCode);
+                    isSuccess = isSuccess || logEntrySuccessPredicate.isSuccess(requestHttpMethod, collapsedUrl, responseCode, line);
                 }
             }
             else {
@@ -574,7 +652,7 @@ function AccessLogLineParser(name, logEntryRegExpString, logEntryNrOfMatches, lo
                 requestHttpMethod,
                 responseCode,
                 bytesSent,
-                referer,
+                referrer,
                 userAgent,
                 requestParams,
                 timeTakenMillis,
@@ -582,18 +660,19 @@ function AccessLogLineParser(name, logEntryRegExpString, logEntryNrOfMatches, lo
         }
         catch (e) {
             println("[WARN] Failed to parse the following line : " + line);
-            println(e);
+            if (e instanceof java.lang.Exception) {
+                e.printStackTrace();
+            }
             return null;
         }
     };
-
 }
 
 // ==========================================================================
 // LogEntrySuccessPredicate
 // ==========================================================================
 
-function LogEntrySuccessPredicate(requestMethod, collapsedUrlPart, responseCode) {
+function LogEntrySuccessPredicate(requestMethod, collapsedUrlPart, responseCode, subString) {
 
     /** the HTTP requestMethod, e.g. "PUT" */
     this.requestMethod = requestMethod;
@@ -604,18 +683,32 @@ function LogEntrySuccessPredicate(requestMethod, collapsedUrlPart, responseCode)
     /** the HTTP response code to be considered successful */
     this.responseCode = responseCode;
 
-    this.isSuccess = function (requestMethod, collapsedUrl, responseCode) {
+    /** Sub string which shall be found in the access log line */
+    this.subString = subString;
+
+    this.isSuccess = function (requestMethod, collapsedUrl, responseCode, line) {
 
         if (responseCode >= 200 && responseCode < 400) {
             return true;
         }
 
-        if (collapsedUrl.contains(collapsedUrlPart) && this.responseCode == responseCode) {
-            return this.requestMethod == "*" || this.requestMethod == requestMethod
+        if (collapsedUrl.contains(collapsedUrlPart)
+            && this.responseCode == responseCode
+            && this.hasMatchingRequestMethod(requestMethod)
+            && this.subStringMatchesLine(line)) {
+            return true;
+        } else {
+            return false;
         }
+    };
 
-        return false;
-    }
+    this.subStringMatchesLine = function (line) {
+        return (!!this.subString ? line.contains(this.subString) : true);
+    };
+
+    this.hasMatchingRequestMethod = function (requestMethod) {
+        return this.requestMethod == "*" || this.requestMethod == requestMethod
+    };
 
     this.toString = function () {
         var buffer = new java.lang.StringBuilder();
@@ -722,19 +815,6 @@ function LogEntry(logFile, lineNumber, line, ipAddress, timestamp, requestUrl, c
         return buffer.toString();
     };
 
-    this.toCsv = function () {
-        var sdf = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mmZ");
-        var buffer = new java.lang.StringBuilder();
-        buffer.append(sdf.format(this.timestamp)).append(";");
-        buffer.append(this.requestMethod).append(";");
-        buffer.append(this.collapsedUrl).append(";");
-        buffer.append(this.responseCode.toString()).append(";");
-        buffer.append(this.timeTakenMillis.toString()).append(";");
-        buffer.append(this.logFile.getAbsolutePath()).append(";");
-        buffer.append(this.lineNumber.toString());
-        return buffer.toString();
-    };
-
     this.getHttpResponseCodeName = function () {
 
         if (responseCode == "200") return "Ok";
@@ -777,6 +857,18 @@ function LogEntry(logFile, lineNumber, line, ipAddress, timestamp, requestUrl, c
         if (responseCode == "415") return "Unsupported Media Type";
         if (responseCode == "416") return "Requested Range Not Satisfiable";
         if (responseCode == "417") return "Expectation Failed";
+        if (responseCode == "418") return "I’m a teapot";
+        if (responseCode == "420") return "Policy Not Fulfilled";
+        if (responseCode == "421") return "Misdirected Request";
+        if (responseCode == "422") return "Unprocessable Entity";
+        if (responseCode == "423") return "Locked";
+        if (responseCode == "424") return "Failed Dependency";
+        if (responseCode == "425") return "Unordered Collection";
+        if (responseCode == "426") return "Upgrade Required";
+        if (responseCode == "428") return "Precondition Required";
+        if (responseCode == "429") return "Too Many Requests";
+        if (responseCode == "430") return "Request Header Fields Too Large";
+        if (responseCode == "451") return "Unavailable For Legal Reasons";
 
         if (responseCode == "500") return "Internal Error";
         if (responseCode == "501") return "Not Implemented";
@@ -789,6 +881,7 @@ function LogEntry(logFile, lineNumber, line, ipAddress, timestamp, requestUrl, c
         if (responseCode == "508") return "Loop Detected";
         if (responseCode == "509") return "Bandwidth Limit Exceeded";
         if (responseCode == "510") return "Not Extended";
+        if (responseCode == "511") return "Network Authentication Required";
 
         return "HTTP Code " + responseCode;
     };
@@ -799,5 +892,3 @@ function LogEntry(logFile, lineNumber, line, ipAddress, timestamp, requestUrl, c
 }
 
 main(arguments);
-
-
