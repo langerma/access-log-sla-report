@@ -131,8 +131,8 @@ var CATALINA_SIT_GEORGE_IMPORTER_ACCESS_LOG_PARSER = new AccessLogLineParser(
 
 // === SIT Apache HTTPD ======================================================
 
-var HTTPD_SIT_LOGENTRY_GROK_MATCHES_REQUIRED = 27;
-var HTTPD_SIT_LOGENTRY_GROK_EXPRESSION = "%{COMBINEDAPACHELOG} pid:%{NUMBER}/%{NUMBER} uid:%{NOTSPACE} con:%{IPORHOST}/%{POSINT} cbs:%{INT}/%{INT} ckr:%{INT} cst:%{NOTSPACE} rtm:%{NUMBER}/%{NUMBER:time_duration}";
+var HTTPD_SIT_LOGENTRY_GROK_MATCHES_REQUIRED = 28;
+var HTTPD_SIT_LOGENTRY_GROK_EXPRESSION = "%{COMBINEDAPACHELOG} pid:%{NUMBER}/%{NUMBER} uid:%{NOTSPACE} con:%{IPORHOST}/%{POSINT} cbs:%{INT}/%{INT} ckr:%{INT} cst:%{NOTSPACE} rts:%{GREEDYDATA} rtm:%{NUMBER}/%{NUMBER:time_duration}";
 
 var HTTPD_SIT_ACCESS_LOG_PARSER = new AccessLogLineParser(
     "httpd-sit",
